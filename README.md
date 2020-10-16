@@ -4,13 +4,14 @@ Senior Capstone project for Fall and Winter of 2020.
 
 ## Overview
 
-We will be creating a framework for creating AR micoroservices. This Machine Learning Enchanced Augmented-Reality Toolkit (MEAT) will be used to generate a few example services:
+We will be creating a framework for developing AR micoroservices. This Machine-Learning Enhanced Augmented-Reality Toolkit (MEAT) will be used to generate a few example services:
 
 -  Gesture Recognition
     - hotkeys and sign language to text
 - Basketball Shot Analysis
 - Object Location
 - Screen Embedder
+    - placement of virtual screen(s) onto visible surfaces
 
 ## Usage
 
@@ -28,4 +29,4 @@ Naming things is half the fun, here is a list of acronyms and project names that
 - Gesture? I hardly know her - Gesture Recognition Micro-service
 - Shots - Basketball Shot Analysis
 - Where's the Beef? - Object Location
-- Staring at the Ceiling - Screen Embedder
+- Staring At the Ceiling (SAC) - Screen Embedder
