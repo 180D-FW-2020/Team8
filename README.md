@@ -4,7 +4,7 @@ Senior Capstone project for Fall and Winter of 2020.
 
 ## Overview
 
-We will be creating a framework for creating AR micoroservices. This Machine Learning Enchanced Augmented reality Toolkit (MEAT) will be used to generate a few example services:
+We will be creating a framework for creating AR micoroservices. This Machine Learning Enchanced Augmented-Reality Toolkit (MEAT) will be used to generate a few example services:
 
 -  Gesture Recognition
     - hotkeys and sign language to text
