@@ -28,4 +28,4 @@ Naming things is half the fun, here is a list of acronyms and project names that
 - Gesture? I hardly know her - Gesture Recognition Micro-service
 - Shots - Basketball Shot Analysis
 - Where's the Beef? - Object Location
-
+- Staring at the Ceiling - Screen Embedder
