@@ -1,0 +1,8 @@
+# MEAT Dependencies (The Bones)
+Python       v3.8.0
+NumPy        
+MatPlotLib   
+Pandas       
+SciPy        
+OpenCV       v4.1.1
+
