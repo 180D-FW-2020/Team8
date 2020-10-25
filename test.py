@@ -2,11 +2,10 @@
 
 import envrd as ev
 import numpy as np
-
-f = np.array([''])
+import pyAudioAnalysis as audio
 
 def main():
-    ev.drawScene(True,f)
+    pass
 
 if __name__ == '__main__':
     main()
