@@ -2,7 +2,8 @@
 
 import envrd as ev
 import numpy as np
-import pyAudioAnalysis as audio
+from pocketsphinx.pocketsphinx import *
+from sphinxbase.sphinxbase import *
 
 def main():
     pass
