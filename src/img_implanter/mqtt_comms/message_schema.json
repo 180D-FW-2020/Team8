@@ -1,0 +1,355 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "messages": [
+                {
+                    "message_type": "weather",
+                    "data": {
+                        "conditions": "sunny",
+                        "temp": 70,
+                        "high": 84,
+                        "low": 66
+                    }
+                },
+                {
+                    "message_type": "text",
+                    "data": "some text message",
+                    "sender": "some_user",
+                    "reciever": "some_user",
+                    "time": {
+                        "hour": 123456,
+                        "minute": 123456,
+                        "second": 123456
+                    }
+                },
+                {
+                    "message_type": "news",
+                    "data": "hyperlink",
+                    "relevant_text": "some text"
+                }
+            ]
+        }
+    ],
+    "required": [
+        "messages"
+    ],
+    "properties": {
+        "messages": {
+            "$id": "#/properties/messages",
+            "type": "array",
+            "title": "The messages schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "message_type": "weather",
+                        "data": {
+                            "conditions": "sunny",
+                            "temp": 70,
+                            "high": 84,
+                            "low": 66
+                        }
+                    },
+                    {
+                        "message_type": "text",
+                        "data": "some text message",
+                        "sender": "some_user",
+                        "reciever": "some_user",
+                        "time": {
+                            "hour": 123456,
+                            "minute": 123456,
+                            "second": 123456
+                        }
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/messages/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/messages/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "message_type": "weather",
+                                "data": {
+                                    "conditions": "sunny",
+                                    "temp": 70,
+                                    "high": 84,
+                                    "low": 66
+                                }
+                            }
+                        ],
+                        "required": [
+                            "message_type",
+                            "data"
+                        ],
+                        "properties": {
+                            "message_type": {
+                                "$id": "#/properties/messages/items/anyOf/0/properties/message_type",
+                                "type": "string",
+                                "title": "The message_type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "weather"
+                                ]
+                            },
+                            "data": {
+                                "$id": "#/properties/messages/items/anyOf/0/properties/data",
+                                "type": "object",
+                                "title": "The data schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "conditions": "sunny",
+                                        "temp": 70,
+                                        "high": 84,
+                                        "low": 66
+                                    }
+                                ],
+                                "required": [
+                                    "conditions",
+                                    "temp",
+                                    "high",
+                                    "low"
+                                ],
+                                "properties": {
+                                    "conditions": {
+                                        "$id": "#/properties/messages/items/anyOf/0/properties/data/properties/conditions",
+                                        "type": "string",
+                                        "title": "The conditions schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "sunny"
+                                        ]
+                                    },
+                                    "temp": {
+                                        "$id": "#/properties/messages/items/anyOf/0/properties/data/properties/temp",
+                                        "type": "integer",
+                                        "title": "The temp schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            70
+                                        ]
+                                    },
+                                    "high": {
+                                        "$id": "#/properties/messages/items/anyOf/0/properties/data/properties/high",
+                                        "type": "integer",
+                                        "title": "The high schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            84
+                                        ]
+                                    },
+                                    "low": {
+                                        "$id": "#/properties/messages/items/anyOf/0/properties/data/properties/low",
+                                        "type": "integer",
+                                        "title": "The low schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            66
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        },
+                        "additionalProperties": true
+                    },
+                    {
+                        "$id": "#/properties/messages/items/anyOf/1",
+                        "type": "object",
+                        "title": "The second anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "message_type": "text",
+                                "data": "some text message",
+                                "sender": "some_user",
+                                "reciever": "some_user",
+                                "time": {
+                                    "hour": 123456,
+                                    "minute": 123456,
+                                    "second": 123456
+                                }
+                            }
+                        ],
+                        "required": [
+                            "message_type",
+                            "data",
+                            "sender",
+                            "reciever",
+                            "time"
+                        ],
+                        "properties": {
+                            "message_type": {
+                                "$id": "#/properties/messages/items/anyOf/1/properties/message_type",
+                                "type": "string",
+                                "title": "The message_type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "text"
+                                ]
+                            },
+                            "data": {
+                                "$id": "#/properties/messages/items/anyOf/1/properties/data",
+                                "type": "string",
+                                "title": "The data schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "some text message"
+                                ]
+                            },
+                            "sender": {
+                                "$id": "#/properties/messages/items/anyOf/1/properties/sender",
+                                "type": "string",
+                                "title": "The sender schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "some_user"
+                                ]
+                            },
+                            "reciever": {
+                                "$id": "#/properties/messages/items/anyOf/1/properties/reciever",
+                                "type": "string",
+                                "title": "The reciever schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "some_user"
+                                ]
+                            },
+                            "time": {
+                                "$id": "#/properties/messages/items/anyOf/1/properties/time",
+                                "type": "object",
+                                "title": "The time schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "hour": 123456,
+                                        "minute": 123456,
+                                        "second": 123456
+                                    }
+                                ],
+                                "required": [
+                                    "hour",
+                                    "minute",
+                                    "second"
+                                ],
+                                "properties": {
+                                    "hour": {
+                                        "$id": "#/properties/messages/items/anyOf/1/properties/time/properties/hour",
+                                        "type": "integer",
+                                        "title": "The hour schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            123456
+                                        ]
+                                    },
+                                    "minute": {
+                                        "$id": "#/properties/messages/items/anyOf/1/properties/time/properties/minute",
+                                        "type": "integer",
+                                        "title": "The minute schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            123456
+                                        ]
+                                    },
+                                    "second": {
+                                        "$id": "#/properties/messages/items/anyOf/1/properties/time/properties/second",
+                                        "type": "integer",
+                                        "title": "The second schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": 0,
+                                        "examples": [
+                                            123456
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        },
+                        "additionalProperties": true
+                    },
+                    {
+                        "$id": "#/properties/messages/items/anyOf/2",
+                        "type": "object",
+                        "title": "The third anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "message_type": "news",
+                                "data": "hyperlink",
+                                "relevant_text": "some text"
+                            }
+                        ],
+                        "required": [
+                            "message_type",
+                            "data",
+                            "relevant_text"
+                        ],
+                        "properties": {
+                            "message_type": {
+                                "$id": "#/properties/messages/items/anyOf/2/properties/message_type",
+                                "type": "string",
+                                "title": "The message_type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "news"
+                                ]
+                            },
+                            "data": {
+                                "$id": "#/properties/messages/items/anyOf/2/properties/data",
+                                "type": "string",
+                                "title": "The data schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "hyperlink"
+                                ]
+                            },
+                            "relevant_text": {
+                                "$id": "#/properties/messages/items/anyOf/2/properties/relevant_text",
+                                "type": "string",
+                                "title": "The relevant_text schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "some text"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        }
+    },
+    "additionalProperties": true
+}
