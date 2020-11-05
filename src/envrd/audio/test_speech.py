@@ -3,7 +3,7 @@ import sphinxbase
 import pocketsphinx
 
 r = speech.Recognizer()
-with speech.Microphone() as source:
+with speech.Microphone(sample_rate=44100) as source:
     print("listening...")
     audio = r.listen(source)
 
