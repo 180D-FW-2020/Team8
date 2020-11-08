@@ -1,6 +1,5 @@
 import speech_recognition as speech
-import sphinxbase
-import pocketsphinx
+
 
 r = speech.Recognizer()
 with speech.Microphone(sample_rate=44100) as source:
