@@ -1,15 +1,16 @@
-import speech_recognition as speech
+from audio import SpeechRecognizer
+import time
 
+sped = SpeechRecognizer()
+phrase = "testing"
+sped.add_keyphrase(phrase)
 
-r = speech.Recognizer()
-with speech.Microphone(sample_rate=44100) as source:
-    print("listening...")
-    audio = r.listen(source)
-
-try:
-    print("Sphinx heard: " + r.recognize_sphinx(audio))
-except speech.UnknownValueError:
-    print("Sphinx could not understand audio")
-except speech.RequestError as err:
-    print("Sphinx error; {0}".format(err))
+while(1):
+    time.sleep(0.5)
+    for phrase,detected in sped.phrases.items():
+        if detected == True:
+            #this is the detection event. do whatever needs to be done once a keyphrase is detected here
+            print("KEYPHRASE \"{0}\" DETECTED".format(phrase))
+    #print(sped.phrases)
+    sped.reset_detect_events()
     
