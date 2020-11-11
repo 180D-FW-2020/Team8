@@ -7,19 +7,6 @@ from threading import Thread
 from queue import Queue
 
 r = speech.Recognizer()
-with speech.Microphone(sample_rate=44100) as source:
-    print("listening...")
-    audio = r.listen(source)
-
-try:
-    print("Sphinx heard: " + r.recognize_sphinx(audio))
-except speech.UnknownValueError:
-    print("Sphinx could not understand audio")
-except speech.RequestError as err:
-    print("Sphinx error; {0}".format(err))
-
-
-
 audio_queue = Queue()
 
 def recognize_worker():
@@ -28,7 +15,7 @@ def recognize_worker():
         audio = audio_queue.get()  # retrieve the next audio processing job from the main thread
         if audio is None: break  # stop processing if the main thread is done
 
-        # received audio data, now recognizel
+        # received audio data, now recognize
         try:
             print("Sphinx heard: " + r.recognize_sphinx(audio))
         except speech.UnknownValueError:
