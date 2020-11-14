@@ -14,12 +14,14 @@ import numpy as np
 
 class hand_tracker:
     
-    def __init__(self, upper_HSV, lower_HSV, filter =[],debug=False):
+    def __init__(self, upper_HSV, lower_HSV, filter_coeff =[],debug=False):
         self.camera = cv.VideoCapture(0)
         self.upper_HSV = upper_HSV
         self.lower_HSV = lower_HSV
         self.locations = []
-        self.filter_coefficients = filter
+        for i in range(len(filter_coeff)):
+            self.locations.append((0,0))
+        self.filter_coefficients = filter_coeff
         _,frame = self.camera.read()
         _, self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         self.debugging = debug
@@ -45,6 +47,14 @@ class hand_tracker:
     def open_hand_present(self):
         fingers = self.num_fingers()
         return (fingers <= 6) or (fingers >= 4)
+
+    def __filter(self, values, filter_coeffs):
+        acc0 = 0
+        acc1 = 0
+        for index, data_point in enumerate(values):
+            acc0 += data_point[0]*filter_coeffs[index]
+            acc1 += data_point[1]*filter_coeffs[index]
+        return (int(acc0),int(acc1))
 
     def location(self):
         self.__get_frame()
@@ -93,20 +103,19 @@ class hand_tracker:
             if points:
                 com = int(sum(i[0] for i in points)/len(points)), int(sum(i[1] for i in points)/len(points))
             else:
-                com = (0,0)
+                com = self.locations[0] #assume no change
+
             self.locations = np.roll(self.locations, 1)
             self.locations[0] = com
     
             # filter
-            com_arr = np.asarray(com)
-            old_loc_arr = np.asarray(old_loc)
-            loc =  int(0.5*float(com_arr[0]) +0.5*float(old_loc_arr[0])), \
-                    int(0.5*float(com_arr[1]) +0.5*float(old_loc_arr[1]))
+            loc = self.__filter(np.array(self.locations), self.filter_coefficients)
+
             
             if self.debugging:
                 cv.circle(self.last_frame, loc, 4, [255, 255 , 0], -1)
                 cv.putText(self.last_frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
-       
+            return loc
 
 if __name__ == '__main__':
     print()
