@@ -56,8 +56,8 @@ class img_processor:
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    image_path = '/Users/michaelhuang/Desktop/Team8/static_exploration/models_envs/env.png'
-    model_path = '/Users/michaelhuang/Desktop/Team8/static_exploration/models_envs/model.png'
+    image_path = '/Users/michaelhuang/Desktop/Team8/src/static_ar_exploration/models_envs/env.png'      # change for your local path
+    model_path = '/Users/michaelhuang/Desktop/Team8/src/static_ar_exploration/models_envs/model.png'    # change for your local path
 
     surface_detector = img_processor(image_path, model_path)
     img_w_kpts = surface_detector.find_keypoints()
