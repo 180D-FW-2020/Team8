@@ -24,9 +24,9 @@ IMU.initIMU() # initialize all the relevant sensors
 # Hardware Varibles and setup
 green_led = 21
 red_led = 13
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(green_led, GPIO.IN, initial=GPIO.LOW )
-GPIO.setup(red_led, GPIO.IN, initial=GPIO.LOW )
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(green_led, GPIO.OUT, initial=GPIO.LOW )
+GPIO.setup(red_led, GPIO.OUT, initial=GPIO.LOW )
 
 # gestures
 gestures = ["left_swipe", "garbage"]
@@ -67,17 +67,17 @@ for label,gesture in enumerate(gestures):
             # may need to introduce some delay to ensure our sampling rate at run time is similar
             # time.sleep(0)
             samples+=1
-
         # change lights
         GPIO.output(green_led,GPIO.LOW)
         GPIO.output(red_led,GPIO.HIGH)
-
+        
+        print(samples)
         time.sleep(duration)
         sample_per_itteration[i] = samples
         reading = np.insert(reading,0, label)
         
         #make column labels
-        df = pd.DataFrame(reading, columns=np.arange(samples+1))
+        df = pd.DataFrame([reading], columns=np.arange(samples*6+1))
         data=data.append(df, ignore_index=True)
 min_len = min(sample_per_itteration) + 1
 max_len = max(sample_per_itteration)+ 1
@@ -86,4 +86,4 @@ remove_cols = np.arange(min_len+1,max_len+1)
 data = data.drop(columns=remove_cols)
 
 data.to_csv("meat_gesture_database.csv", mode='a', header=False)
-
+GPIO.cleanup()
