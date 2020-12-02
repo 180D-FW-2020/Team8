@@ -13,7 +13,6 @@ import numpy as np
 import cvxpy as cp
 
 
-
 class soft_SVM:
     def __init__(self, K, M):
         self.K = K   # Number of classes

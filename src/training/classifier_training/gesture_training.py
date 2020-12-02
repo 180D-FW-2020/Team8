@@ -8,4 +8,5 @@
  #  @brief train gesture recognition using the gesutre_recognition_data.csv file
  #
 
-import soft_SVM as svm
+from soft_SVM import soft_SVM as svm
+
