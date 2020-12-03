@@ -24,7 +24,7 @@ IMU.initIMU() # initialize all the relevant sensors
 # Hardware Varibles and setup
 green_led = 21
 red_led = 13
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(green_led, GPIO.OUT, initial=GPIO.LOW )
 GPIO.setup(red_led, GPIO.OUT, initial=GPIO.LOW )
 
