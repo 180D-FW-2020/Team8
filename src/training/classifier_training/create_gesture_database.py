@@ -85,5 +85,5 @@ remove_cols = np.arange(min_len+1,max_len+1)
 
 data = data.drop(columns=remove_cols)
 
-data.to_csv("meat_gesture_database.csv", mode='a', header=False)
+data.to_csv("meat_gesture_database_testing.csv", mode='a', header=False)
 GPIO.cleanup()
