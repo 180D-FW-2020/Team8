@@ -59,7 +59,7 @@ class soft_SVM:
                 b = cp.Variable(1)
                 En = cp.Variable(X_subset.shape[0])
                 # objective = cp.Minimize(0.5 * cp.sum_squares(c) + 0.1*cp.norm(En, 1)) # detmine if using SVM
-                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 0.1*cp.norm(En, 1)) # detmine if using SVM
+                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 100000*cp.norm(En, 1)) # detmine if using SVM
                 constraints = [cp.multiply(Y, ((X_subset @ c) + b)) >= 1-En, En >= 0]  # detmine if using SVM
                 prob = cp.Problem(objective, constraints)
                 prob.solve(solver=cp.ECOS, max_iters=200, verbose=True)
@@ -69,6 +69,26 @@ class soft_SVM:
                 self.w.append(b.value)
             
         return
+    def f(self, test_results):
+        # THIS IS WHERE YOU SHOULD WRITE YOUR CLASSIFICATION FUNCTION
+        #
+        # The inputs of this function are:
+        #
+        # inp: the input to the function f(*), equal to g(y) = W^T y + w
+        #
+        # The outputs of this function are:
+        #
+        # s: this should be a scalar equal to the class estimated from
+        # the corresponding input data point, equal to f(W^T y + w)
+        # You should also check if the classifier is trained i.e. self.W and
+        # self.w are nonempty
+            
+        test_results_sign = np.sign(test_results)
+        y_hat = test_results_sign @ self.A.T
+        s_labels = self.labels[np.argmax(y_hat, axis=1)]
+
+        return s_labels
+        
     def classify(self, test_data):
         # check that classifier is trained
         if not self.W or not self.w:
