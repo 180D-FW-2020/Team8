@@ -1,0 +1,9 @@
+sphinx:
+- full errors: 17
+- semi-errors (incorrect contraction or some other error that preserves meaning): 8
+
+google:
+- full: 1
+- semi: 12 (all capitalization errors)
+
+total words: 262
