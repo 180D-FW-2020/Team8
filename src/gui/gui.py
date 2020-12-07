@@ -6,21 +6,43 @@
  #  @brief ui and event handling for data/classifiers
  #
 
+PATH = [
+        # '../training/classifier_training',
+        # '../video_embedder',
+        # '../static_ar_exploration',
+        # '../img_implanter/mqtt_comms',
+        '../envrd/audio',
+        # '../envrd/gesture_detector',
+        # '../env_reader/image_tracking/hand_tracker'
+       ]
+
 import sys
+print("path is ")
+for p in sys.path: 
+    print(p)
+print("appending...")
+for lib in PATH:
+    sys.path.append(lib)
+for p in sys.path: 
+    print(p)
+
 import time
-from os import path
+# from os import path
 import cv2 as cv
 import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import threading
+# import IMU
+# import mqtt_message
+import audio
 # import hand_tracker
 # import static_homography
-# import mqtt_message
-# import audio
 # import gest_classifier
-# import IMU
+
+
+
 DRES = 1280,720 # resolution
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
