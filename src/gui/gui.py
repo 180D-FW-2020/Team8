@@ -14,11 +14,13 @@ import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+import threading
 # import hand_tracker
 # import static_homography
 # import mqtt_message
 # import audio
-
+# import gest_classifier
+# import IMU
 DRES = 1280,720 # resolution
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
@@ -31,9 +33,48 @@ class MQTTNetObject:
         pass
 
 class IMUSampleObject:
-    def __init__(self):
-        #TODO
-        pass
+    def __init__(self, window_length, overlap, sample_period):
+        self.window_length = window_length #number of Samples
+        self.classifier    = gest_classifier(2,6*window_length)
+        self.length_sample = 6
+        self.data    = [None]*self.length_sample*window_length
+        self.reading = [None]*self.length_sample*overlap
+        self.overlap = overlap
+        self.samples_taken = 0
+        self.sample_period = sample_period
+
+        #initialize sensor
+        IMU.detectIMU()
+        if(IMU.BerryIMUversion == 99):
+            print(" No BerryIMU found...sick nasty")
+            sys.exit()
+        IMU.initIMU() # initialize all the relevant sensors
+
+    def sample(self):
+        ACCx = IMU.readACCx()
+        ACCy = IMU.readACCy()
+        ACCz = IMU.readACCz()
+        GYRx = IMU.readGYRx()
+        GYRy = IMU.readGYRy()
+        GYRz = IMU.readGYRz()
+        self.reading[self.samples_taken*self.length_sample]      = ACCx
+        self.reading[self.samples_taken*self.length_sample + 1 ] = ACCy
+        self.reading[self.samples_taken*self.length_sample + 2 ] = ACCz
+        self.reading[self.samples_taken*self.length_sample + 3 ] = GYRx
+        self.reading[self.samples_taken*self.length_sample + 4 ] = GYRy
+        self.reading[self.samples_taken*self.length_sample + 5 ] = GYRz
+        
+        self.samples_taken += 1
+
+        if not(self.samples_taken % self.overlap):
+            self.data = np.roll(self.data, (self.window_length - self.overlap)*6)
+            self.data[-self.overlap:] = self.reading
+            self.samples_taken = 0
+            self.classifier.classify(self.data) #TODO make event triggering on this result
+
+    def run(self):
+        threading.Timer(self.sample_period, self.sample).start()
+
 
 class AreaSelectObject:
     def __init__(self):

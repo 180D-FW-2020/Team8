@@ -88,10 +88,10 @@ print(f"Accuracy = {accuracy}")
 print(f"Training Accuracy = {train_accuracy}")
 
 # save results
-save_results = False
+save_results = True
 if save_results:
-    np.savetxt('left_swipe_classifier_coeffs.csv', classifier.W[0])
-    np.savetxt('left_swipe_classifier_bias.csv', classifier.w[0])
+    np.savetxt('src/training/classifier_coeffs/left_swipe_classifier_coeffs.csv', classifier.W[0])
+    np.savetxt('src/training/classifier_coeffs/left_swipe_classifier_bias.csv', classifier.w[0])
     print('Results saved.')
 
   
