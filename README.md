@@ -23,6 +23,11 @@ The following description can be ran through to allow the use of our repo and li
 git clone git@github.com:180D-FW-2020/Team8.git
 ```
 
+2. Setup conda environemnt
+```
+conda env create -f environment.yml
+```
+
 ## Dictionary
 Naming things is half the fun, here is a list of acronyms and project names that can be found within this repo:
 
