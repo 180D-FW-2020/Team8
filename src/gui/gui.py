@@ -41,7 +41,8 @@ import audio
 # import static_homography
 # import gest_classifier
 
-
+for lib in PATH:
+    sys.path.remove(lib)
 
 DRES = 1280,720 # resolution
 DFORMAT = QImage.Format_RGB888 # color space
@@ -55,61 +56,57 @@ class MQTTNetObject:
         pass
 
 class IMUSampleObject:
-    def __init__(self, window_length, overlap, sample_period):
-        self.window_length = window_length #number of Samples
-        self.classifier    = gest_classifier(2,6*window_length)
-        self.length_sample = 6
-        self.data    = [None]*self.length_sample*window_length
-        self.reading = [None]*self.length_sample*overlap
-        self.overlap = overlap
-        self.samples_taken = 0
-        self.sample_period = sample_period
+    # def __init__(self, window_length, overlap, sample_period):
+    #     self.window_length = window_length #number of Samples
+    #     self.classifier    = gest_classifier(2,6*window_length)
+    #     self.length_sample = 6
+    #     self.data    = [None]*self.length_sample*window_length
+    #     self.reading = [None]*self.length_sample*overlap
+    #     self.overlap = overlap
+    #     self.samples_taken = 0
+    #     self.sample_period = sample_period
 
-        #initialize sensor
-        IMU.detectIMU()
-        if(IMU.BerryIMUversion == 99):
-            print(" No BerryIMU found...sick nasty")
-            sys.exit()
-        IMU.initIMU() # initialize all the relevant sensors
+    #     #initialize sensor
+    #     IMU.detectIMU()
+    #     if(IMU.BerryIMUversion == 99):
+    #         print(" No BerryIMU found...sick nasty")
+    #         sys.exit()
+    #     IMU.initIMU() # initialize all the relevant sensors
 
-    def sample(self):
-        ACCx = IMU.readACCx()
-        ACCy = IMU.readACCy()
-        ACCz = IMU.readACCz()
-        GYRx = IMU.readGYRx()
-        GYRy = IMU.readGYRy()
-        GYRz = IMU.readGYRz()
-        self.reading[self.samples_taken*self.length_sample]      = ACCx
-        self.reading[self.samples_taken*self.length_sample + 1 ] = ACCy
-        self.reading[self.samples_taken*self.length_sample + 2 ] = ACCz
-        self.reading[self.samples_taken*self.length_sample + 3 ] = GYRx
-        self.reading[self.samples_taken*self.length_sample + 4 ] = GYRy
-        self.reading[self.samples_taken*self.length_sample + 5 ] = GYRz
+    # def sample(self):
+    #     ACCx = IMU.readACCx()
+    #     ACCy = IMU.readACCy()
+    #     ACCz = IMU.readACCz()
+    #     GYRx = IMU.readGYRx()
+    #     GYRy = IMU.readGYRy()
+    #     GYRz = IMU.readGYRz()
+    #     self.reading[self.samples_taken*self.length_sample]      = ACCx
+    #     self.reading[self.samples_taken*self.length_sample + 1 ] = ACCy
+    #     self.reading[self.samples_taken*self.length_sample + 2 ] = ACCz
+    #     self.reading[self.samples_taken*self.length_sample + 3 ] = GYRx
+    #     self.reading[self.samples_taken*self.length_sample + 4 ] = GYRy
+    #     self.reading[self.samples_taken*self.length_sample + 5 ] = GYRz
         
-        self.samples_taken += 1
+    #     self.samples_taken += 1
 
-        if not(self.samples_taken % self.overlap):
-            self.data = np.roll(self.data, (self.window_length - self.overlap)*6)
-            self.data[-self.overlap:] = self.reading
-            self.samples_taken = 0
-            self.classifier.classify(self.data) #TODO make event triggering on this result
+    #     if not(self.samples_taken % self.overlap):
+    #         self.data = np.roll(self.data, (self.window_length - self.overlap)*6)
+    #         self.data[-self.overlap:] = self.reading
+    #         self.samples_taken = 0
+    #         self.classifier.classify(self.data) #TODO make event triggering on this result
 
-    def run(self):
-        threading.Timer(self.sample_period, self.sample).start()
-
+    # def run(self):
+    #     threading.Timer(self.sample_period, self.sample).start()
+    pass
 
 class AreaSelectObject:
     def __init__(self):
         #TODO
         pass
 
-# class AudioObject(audio.SpeechRecognizer):
-#     def __init__(self, keyphrases):
-#         SpeechRecognizer.__init__(self)
-#         self.keyphrases = keyphrases
-#         for phrase in self.keyphrases:
-#             self.add_keyphrase(self, phrase)
-#         pass
+class AudioObject(audio.SpeechRecognizer):
+    def __init__(self, keyphrases):
+        super().__init__(keyphrases)
 
 # @desc
 # widget for handling a display from an opencv source
@@ -215,4 +212,7 @@ class UI:
         sys.exit(self.qapp.exec_())
 
 if __name__ == '__main__':
+    phrases = {'testing': False}
+    someaudio = AudioObject(phrases)
+    print(someaudio.phrases)
     someUI = UI()

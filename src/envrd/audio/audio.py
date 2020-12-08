@@ -4,10 +4,10 @@ import speech_recognition as sr
 import time
 
 class SpeechRecognizer:
-    def __init__(self):
+    def __init__(self, keyphrases : dict):
         self.recog = sr.Recognizer()
         self.mic = sr.Microphone()
-        self.phrases = {}
+        self.phrases = keyphrases
         with self.mic as source:
             self.recog.adjust_for_ambient_noise(source)
         self.stop_listening = self.recog.listen_in_background(self.mic, self.recognize_in_background)
@@ -28,14 +28,13 @@ class SpeechRecognizer:
         try:
             out = self.recog.recognize_sphinx(audio)
             print("Sphinx heard: " + out)
+            for phrase in self.phrases:
+                if phrase in out:
+                    self.phrases[phrase] = True
         except sr.UnknownValueError:
             print("Sphinx could not understand audio")
         except sr.RequestError as err:
             print("Sphinx error; {0}".format(err))
-
-        for phrase in self.phrases:
-            if phrase in out:
-                self.phrases[phrase] = True
 
     def reset_detect_events(self):
         self.phrases = dict.fromkeys(self.phrases, False)   
