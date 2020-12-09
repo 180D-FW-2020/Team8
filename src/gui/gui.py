@@ -89,6 +89,10 @@ class AreaSelectObject:
 #             self.add_keyphrase(self, phrase)
 #         pass
 
+class VideoOverlayCarousel:
+    def __init__(self):
+        pass
+
 # @desc
 # widget for handling a display from an opencv source
 class DisplayWidget(QWidget):
