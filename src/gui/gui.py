@@ -48,12 +48,45 @@ DRES = 1280,720 # resolution
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
-DINTERVAL = round(1000/DRATE) # frame refresh interval in msec
+DINTERVAL = round(1000/DRATE) # frame refresh interval (msec)
+
+ATIMEOUT = 5000 # speech recognition max phrase time (msec)
+
+###################################################################
+
+# @desc
+# dump all required signals here 
+# (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
+class JobSignals():
+    error = pyqtSignal(tuple)
+    output = pyqtSignal(object)
+
+# @desc
+# utility class for handling multithreading in Qt
+# all heavy event-triggered ops should be called through this class
+class JobRunner(QRunnable):
+    def __init__(self, function, *args, **kwargs):
+        super(JobRunner, self).__init__()
+
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = JobSignals()
+
+    def run(self):
+        try:
+            output = self.function(*self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+
 
 class MQTTNetObject:
     def __init__(self):
         #TODO
         pass
+
 
 class IMUSampleObject:
     # def __init__(self, window_length, overlap, sample_period):
@@ -99,14 +132,44 @@ class IMUSampleObject:
     #     threading.Timer(self.sample_period, self.sample).start()
     pass
 
+
 class AreaSelectObject:
     def __init__(self):
         #TODO
         pass
 
-class AudioObject(audio.SpeechRecognizer):
-    def __init__(self, keyphrases):
-        super().__init__(keyphrases)
+
+class AudioObject(QObject):
+    detected_phrase = pyqtSignal(str)
+    def __init__(self, keyphrases : dict, parent=None):
+        super().__init__(parent)
+        self.recognizer = audio.SpeechRecognizer(keyphrases)
+        # self.timer = QTimer()
+        # self.timer.setSingleShot(True)
+        # self.timer.timeout.connect(lambda: self.recognizer.teardown())
+
+    # @desc
+    # waits for a keyphrase to be found, then returns the first detected phrase
+    def recordDetection(self):
+        end = False
+        try:
+            while(end == False):
+                for phrase, found in self.recognizer.phrases.items():
+                    if found:
+                        self.recognizer.resetDetection(phrase)
+                        self.detected_phrase.emit(phrase)
+                        self.recognizer.teardown()
+                        end = True
+        except TypeError:
+            pass
+        except ValueError:
+            pass
+
+    def speechHandler(self):
+        # self.timer.start(ATIMEOUT)
+        self.recognizer.listenForPhrases()
+        self.recordDetection()
+
 
 # @desc
 # widget for handling a display from an opencv source
@@ -114,7 +177,7 @@ class DisplayWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.image = QImage()
-
+        
     # @desc
     # private helper function to convert numpy arrays to Qt image objects
     def _array2qimage(self, image : np.ndarray):
@@ -131,13 +194,17 @@ class DisplayWidget(QWidget):
         self.setFixedSize(self.image.size())
         self.update()
 
+    def keyphrasehandler(self, phrase):
+        print("FOUND: " + phrase)
+
     # @desc
     # handler for Qt's paint event, draws the QImage object on screen
     def paintEvent(self, event):
         p = QPainter(self)
         p.drawImage(0, 0, self.image)
         self.image = QImage()
-        
+
+
 # @desc
 # test class for opencv video feed -> replace with any np array
 class TestVideo(QObject):
@@ -164,46 +231,47 @@ class TestVideo(QObject):
         if read:
             self.image_data.emit(frame)
 
+
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
+# also handles threading
 class MainWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        
-        self.setWindowTitle("test UI window") #change name after testing
-        self.windowTitleChanged.connect(lambda: self.alertWindowChanged()) # example of event-based flow for updating ui data
 
         self.display = DisplayWidget()
         self.video = TestVideo()
         self.start_button = QPushButton('START')
+        self.audiomodule = AudioObject({'testing':False})
 
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
+        self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
+        self.audiomodule.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.display)
-        layout.addWidget(self.start_button)
-        self.setLayout(layout)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.display)
+        self.layout.addWidget(self.start_button)
+        self.setLayout(self.layout)
 
-    def alertWindowChanged(self):
-        print("ALERT")
+        self.threadpool = QThreadPool()
+
+    def deleteWidget(self, widget):
+        self.layout.removeWidget(widget)
+        widget.deleteLater()
+        widget = None
 
     # @desc
     # handles double click event for all widgets in UI
     def mouseDoubleClickEvent(self, event):
-        self.setWindowTitle("CHANGED")
+        worker = JobRunner(self.audiomodule.speechHandler)
+        self.threadpool.start(worker)
+
 
 # @desc
 # initializes all UI widgets
 class UI:
     def __init__(self):
-        # self.MQTTHandler = MQTTNetObject()
-        # self.IMUSampler = IMUSampleObject()
-        # self.AreaSelector = AreaSelectObject()
-
-        # self.stt_keyphrases = ["testing"] #placeholder, update once default phrases are known
-        # self.SpeechToText = AudioObject(self.stt_keyphrases)
-
         self.qapp = QApplication(sys.argv)
         self.window = QMainWindow()
         self.main_widget = MainWidget()
@@ -212,7 +280,4 @@ class UI:
         sys.exit(self.qapp.exec_())
 
 if __name__ == '__main__':
-    phrases = {'testing': False}
-    someaudio = AudioObject(phrases)
-    print(someaudio.phrases)
     someUI = UI()
