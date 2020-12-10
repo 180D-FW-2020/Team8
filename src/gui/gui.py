@@ -58,8 +58,9 @@ ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 # dump all required signals here 
 # (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
 class JobSignals():
-    error = pyqtSignal(tuple)
-    output = pyqtSignal(object)
+    error = pyqtSignal(tuple) # redirect error reporting
+    output = pyqtSignal(object) # notify slot of function returned value
+    done = pyqtSignal() # notify main thread of completion
 
 # @desc
 # utility class for handling multithreading in Qt
@@ -73,6 +74,7 @@ class JobRunner(QRunnable):
         self.kwargs = kwargs
         self.signals = JobSignals()
 
+    @pyqtSlot()
     def run(self):
         try:
             output = self.function(*self.args, **self.kwargs)
@@ -177,6 +179,9 @@ class DisplayWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.image = QImage()
+        self.mask_homography = None # use set...Mask to replace with data from signal
+        self.mask_handtrack = None # use set...Mask to replace with data from signal
+
         
     # @desc
     # private helper function to convert numpy arrays to Qt image objects
@@ -187,15 +192,33 @@ class DisplayWidget(QWidget):
         image = image.rgbSwapped()
         return image
 
+    # TODO
+    # should take member masks 
+    def processMasks(self.mask_homography, self.mask_handtrack):
+        pass
+
     # @desc 
     # sets the widget's QImage object, used as a slot for receiving the image_data signal
     def setImage(self, image):
+        # self.processMasks()
         self.image = self._array2qimage(image)
         self.setFixedSize(self.image.size())
         self.update()
 
+    #### IMAGE PROCESSING SLOTS ####
+    # TODO
+    def setHomographyMask(self, layer):
+        pass
+
+    # TODO
+    def setHandTrackMask(self, layer):
+        pass
+
+    #### MISC SLOTS ####
     def keyphrasehandler(self, phrase):
         print("FOUND: " + phrase)
+
+    ####
 
     # @desc
     # handler for Qt's paint event, draws the QImage object on screen
