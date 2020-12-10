@@ -15,25 +15,14 @@ import numpy as np
 class hand_tracker:
 
     def __init__(self, upper_HSV, lower_HSV, filter_coeff =[],debug=False):
-        self.camera = cv.VideoCapture(0)
-        # error opening
-        if not (self.camera.isOpened()):
-            print("Could not open video device")
-
         self.upper_HSV = upper_HSV
         self.lower_HSV = lower_HSV
         self.locations = []
         for i in range(len(filter_coeff)):
             self.locations.append((0,0))
         self.filter_coefficients = filter_coeff
-        _,frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        self.last_frame = []
         self.debugging = debug
-
-    def __get_frame(self):
-        _, frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-        return
 
     def __color_mask(self, frame):
         return cv.inRange(frame, self.lower_HSV, self.upper_HSV)
@@ -60,17 +49,26 @@ class hand_tracker:
             acc1 += data_point[1]*filter_coeffs[index]
         return (int(acc0),int(acc1))
 
+    def calibrate(self, upper_HSV, lower_HSV):
+        self.upper_HSV = upper_HSV
+        self.lower_HSV = lower_HSV
+    
+    def get_frame(self, frame):
+        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        return
+
     def location(self):
-        self.__get_frame()
+        if self.last_frame.size == 0:
+            print("Error: give hand tracker a frame! (get_frame)")
+        # self.__get_frame()  ## now not needed
         masked = self.__color_mask(self.last_frame)
         blurred = self.__blur(masked)
         thresh = self.__bin_threshold(blurred)
         cv.imshow('frame',self.last_frame)
-
-        cv.imshow('frame',masked)
+        cv.imshow('frame_2',masked)
 
         # getting contours
-        _, contours, _= cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         if not contours:
            self.locations = np.roll(self.locations,1)
            self.locations[0] = self.locations[1]
@@ -122,6 +120,8 @@ class hand_tracker:
             if self.debugging:
                 cv.circle(self.last_frame, loc, 4, [0, 0 , 255], -1)
                 cv.putText(self.last_frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
+
+            cv.imshow('cur_frame', self.last_frame)
             return loc
 
 if __name__ == '__main__':

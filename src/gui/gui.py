@@ -6,6 +6,26 @@
  #  @brief ui and event handling for data/classifiers
  #
 
+PATH = [
+        # '../training/classifier_training',
+        # '../video_embedder',
+        # '../static_ar_exploration',
+        # '../img_implanter/mqtt_comms',
+        '../envrd/audio',
+        # '../envrd/gesture_detector',
+        '../env_reader/image_tracking/hand_tracker'
+       ]
+
+import sys
+print("path is ")
+for p in sys.path: 
+    print(p)
+print("appending...")
+for lib in PATH:
+    sys.path.append(lib)
+for p in sys.path: 
+    print(p)
+
 import sys
 import time
 from os import path
@@ -15,7 +35,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import threading
-# import hand_tracker
+import hand_tracker # working on functional hand tracker
 # import static_homography
 # import mqtt_message
 # import audio
@@ -76,6 +96,21 @@ class IMUSampleObject:
         threading.Timer(self.sample_period, self.sample).start()
 
 
+class HandTracker(QObject):
+    hand_loc = pyqtSignal(tuple)
+    def __init__(self, video, parent=None):
+        super().__init__(parent)
+        self._tracker = hand_tracker.hand_tracker((50, 200, 255), (0, 100, 100), np.ones(30), debug=True) # values for upper_HSV, lower_HSV, can be changed
+        self.video = video
+        self.video.image_data.connect(lambda x: self.receiveFrame(x))
+
+    def start(self):
+        self.trigger.start(0, self)
+
+    def receiveFrame(self, frame):
+        self._tracker.get_frame(frame)
+        self.hand_loc.emit(self._tracker.location())
+
 class AreaSelectObject:
     def __init__(self):
         #TODO
@@ -103,7 +138,8 @@ class DisplayWidget(QWidget):
         bpl = w*3 # bytes per line
         image = QImage(image.data, w, h, bpl, DFORMAT)
         image = image.rgbSwapped()
-        return image
+        return image        
+
 
     # @desc 
     # sets the widget's QImage object, used as a slot for receiving the image_data signal
@@ -156,9 +192,13 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = TestVideo()
+        self.hand_tracker = HandTracker(self.video)
+        self.hand_loc = (-1, -1)
         self.start_button = QPushButton('START')
 
-        self.video.image_data.connect(lambda x: self.display.setImage(x))
+        self.hand_tracker.hand_loc.connect(lambda x: self.storeHandLoc(x))
+        self.video.image_data.connect(lambda x: self.sendDisplay(x))
+        # self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
 
         layout = QVBoxLayout()
@@ -168,6 +208,17 @@ class MainWidget(QWidget):
 
     def alertWindowChanged(self):
         print("ALERT")
+
+    def storeHandLoc(self, loc):
+        self.hand_loc = loc
+
+    def sendDisplay(self, image):
+        if self.hand_loc != (-1, -1):
+            pos_lower = (self.hand_loc[0] - 5, self.hand_loc[1] - 5)
+            pos_upper = (self.hand_loc[0] + 5, self.hand_loc[1] + 5)
+            cv.rectangle(image, pos_lower, pos_upper, (0, 255, 0), 3)
+
+        self.display.setImage(image)
 
     # @desc
     # handles double click event for all widgets in UI
