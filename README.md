@@ -27,11 +27,3 @@ git clone git@github.com:180D-FW-2020/Team8.git
 ```
 conda env create -f environment.yml
 ```
-
-## Dictionary
-Naming things is half the fun, here is a list of acronyms and project names that can be found within this repo:
-
-- Gesture? I hardly know her - Gesture Recognition Micro-service
-- Shots - Basketball Shot Analysis
-- Where's the Beef? - Object Location
-- Staring At the Ceiling (SAC) - Screen Embedder

@@ -58,6 +58,7 @@ ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 # dump all required signals here 
 # (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
 class JobSignals():
+
     error = pyqtSignal(tuple) # redirect error reporting
     output = pyqtSignal(object) # notify slot of function returned value
     done = pyqtSignal() # notify main thread of completion
@@ -181,7 +182,6 @@ class DisplayWidget(QWidget):
         self.image = QImage()
         self.mask_homography = None # use set...Mask to replace with data from signal
         self.mask_handtrack = None # use set...Mask to replace with data from signal
-
         
     # @desc
     # private helper function to convert numpy arrays to Qt image objects
