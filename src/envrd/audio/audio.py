@@ -7,14 +7,14 @@ class SpeechRecognizer:
     def __init__(self, keyphrases : dict):
         print("starting audio module...")
         self.recog = sr.Recognizer()
-        self.mic = sr.Microphone()
         self.phrases = keyphrases
-        with self.mic as source:
-            self.recog.adjust_for_ambient_noise(source)
         self.stop_listening = None
 
     def listenForPhrases(self):
-        self.stop_listening = self.recog.listen_in_background(self.mic, self._recognize_in_background, phrase_time_limit=5)
+        new_mic = sr.Microphone()
+        with new_mic as source:
+            self.recog.adjust_for_ambient_noise(source)
+        self.stop_listening = self.recog.listen_in_background(new_mic, self._recognize_in_background, phrase_time_limit=5)
 
     def addKeyphrase(self, keyphrase):
         if keyphrase not in self.phrases:
