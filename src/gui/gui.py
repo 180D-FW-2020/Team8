@@ -194,7 +194,7 @@ class DisplayWidget(QWidget):
 
     # TODO
     # should take member masks 
-    def processMasks(self.mask_homography, self.mask_handtrack):
+    def processMasks():
         pass
 
     # @desc 
