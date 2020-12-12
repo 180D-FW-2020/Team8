@@ -13,7 +13,6 @@ import paho.mqtt.client as mqtt
 import time
 import datetime
 
-
 class MQTTLink:
 
         # MQTT client functions
@@ -21,6 +20,7 @@ class MQTTLink:
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe(self.board, qos=1)
+        print("Subscribed to " + self.board)
     
     def __on_disconnect_subscriber(self, client, userdata, rc):
         if rc != 0:
@@ -31,7 +31,6 @@ class MQTTLink:
     def __on_connect_publisher(self, client, userdata, flags, rc):
         print("Connection returned result: "+str(rc))
 
-    
     def __on_disconnect_publisher(self, client, userdata, rc):
         if rc != 0:
             print('Unexpected Disconnect')
@@ -60,7 +59,7 @@ class MQTTLink:
             self.client.on_disconnect = self.__on_disconnect_subscriber
             self.client.on_message = self.__on_message
 
-        self.client.connect_async('mqtt.eclipse.org')
+        self.client.connect_async('mqtt.eclipseprojects.io', 1883)
 
     def __del__(self):
         self.client.disconnect()
@@ -69,10 +68,7 @@ class MQTTLink:
         #only listen if a reciever is initiated
         if self.rx:
             if duration == -1:
-                self.client.loop_start()
-                while True:
-                    pass
-                self.client.loop_stop()
+                self.client.loop_forever()
             else:
                 self.client.loop_start()
                 time.sleep(duration)
@@ -80,7 +76,7 @@ class MQTTLink:
                 #toc = time.perf_counter()
                 #while (toc-tic < duration):
                 #    pass
-                #self.client.loop_stop()
+                self.client.loop_stop()
             
         else:
             print("Error: not rx")
@@ -129,33 +125,12 @@ class MQTTLink:
 
     def send(self):
         self.client.loop_start()
+        
         # only send if a transmitter has been initiated
         if self.tx:
             self.client.publish(self.board, json.dumps(self.message), qos=1)
-            self.message = {"messages":[]}
+            #self.message = {"messages":[]}
         else:
             print("Error: not Tx")
         self.client.loop_stop()
         self.client.disconnect()
-
-
-# defining for test script
-if __name__ == '__main__':
-
-    # Note: make sure you are reading values from a subscriber on the same board to see the result
-    # Start a client
-    mqtt_tx = MQTTLink("tx","ece180d/team8")
-
-    # Add data
-    mqtt_tx.addText("some text", "Jack", "John")
-    mqtt_tx.addWeather("sunny", 69, 75, 50)
-    mqtt_tx.addNews("https://www.youtube.com/watch?v=oHg5SJYRHA0", "important information")
-    
-    # Send
-    mqtt_tx.send()
-
-    
-    # Test Rx
-    mqtt_rx = MQTTLink("rx", "ece180d/team8")
-    mqtt_rx.listen(20.0)
-    print(json.dumps(mqtt_rx.get_message()))
