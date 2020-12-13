@@ -70,13 +70,13 @@ class MainWidget(QWidget):
         self.s3 = QState()
         self.s31 = QState(self.s3)
         self.s32 = QState(self.s3)
-        self.s3f = QFinalState(self.s3) 
+        self.s3f = QFinalState(self.s3)  # must manually enter finalstate
         self.s3.setInitialState(self.s31)
 
         # parallel-child state
         self.s4 = QState(childMode=1)
         self.s41 = QState(self.s4)
-        self.s41f = QFinalState(self.s41)
+        self.s4f = QFinalState(self.s4) # wait for children to finish; this will be entered automatically
         self.s42 = QState(self.s4)
         # self.s42f = QFinalState(self.s42)
 
@@ -101,6 +101,7 @@ class MainWidget(QWidget):
         self.s32.entered.connect(lambda: self.stuff2(self.s32))
         self.s41.entered.connect(lambda: self.stuff1(self.s41))
         self.s42.entered.connect(lambda: self.stuff2(self.s42))
+        # self.s42.entered.connect(lambda: self.stuffforever(self.s42))
 
         # addTransition():
         # upon some signal, switch to a different state
@@ -116,7 +117,8 @@ class MainWidget(QWidget):
         self.s32.addTransition(self.done2, self.s3f)
         self.s3.addTransition(self.s3.finished, self.s4)
 
-        self.s41.addTransition(self.done1, self.s41f)
+        # self.s41.addTransition(self.done1, self.s4f)
+        # self.s42.addTransition(self.done2, self.s4f)
         # self.s42.addTransition(self.done2, self.s42f)
         self.s4.addTransition(self.s4.finished, self.s1)
 
@@ -145,7 +147,12 @@ class MainWidget(QWidget):
 
     def stuff2(self, state):
         print('entered substate 2')
+        time.sleep(2)
         self.done2.emit()
+
+    def stuffforever(self, state):
+        while(1):
+            time.sleep(1)
 
     def print_state(self, state):
         print(state)
