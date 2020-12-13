@@ -56,12 +56,18 @@ class TimedButton(QPushButton):
 
 
 class MainWidget(QWidget):
+    done = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.statemachine = QStateMachine()
         self.s1 = QState()
         self.s2 = QState()
+        self.s3 = QState()
+        self.s31 = QState(self.s3)
+        self.s32 = QState(self.s3)
+        self.s3f = QFinalState(self.s3)
+        self.s3.setInitialState(self.s31)
         self.b1 = TimedButton()
         self.dummy = DummyObject()
         self.p = QProgressBar(minimum=0,maximum=MAXTIME)
@@ -78,7 +84,9 @@ class MainWidget(QWidget):
         self.s2.entered.connect(self.worker_state2)
         self.s2.entered.connect(self.b1.start)
         self.s2.entered.connect(self.update_bar)
-        self.s1.entered.connect(self.p.reset)
+        self.s3.entered.connect(self.p.reset)
+        self.s31.entered.connect(self.stuff1)
+        self.s32.entered.connect(self.stuff2)
         # self.s1.entered.connect(lambda: self.print_state('current: s1'))
         # self.s2.entered.connect(lambda: self.print_state('current: s2'))
 
@@ -89,10 +97,14 @@ class MainWidget(QWidget):
         # arg1: signal from QObject
         # arg2: QState to switch to
         self.s1.addTransition(self.b1.clicked, self.s2)
-        self.s2.addTransition(self.b1.timer.timeout, self.s1)
+        self.s2.addTransition(self.b1.timer.timeout, self.s3)
+        self.s31.addTransition(self.done, self.s32)
+        self.s32.addTransition(self.done, self.s3f)
+        self.s3.addTransition(self.s3.finished, self.s1)
 
         self.statemachine.addState(self.s1)
         self.statemachine.addState(self.s2)
+        self.statemachine.addState(self.s3)
         self.statemachine.setInitialState(self.s1)
         self.statemachine.start()
 
@@ -100,6 +112,17 @@ class MainWidget(QWidget):
         self.layout.addWidget(self.b1)
         self.layout.addWidget(self.p)
         self.setLayout(self.layout)
+
+    # NOTE: a signal can be reused within the scope of a state machine without
+    #       accidentally triggering more than one slot; only the current state
+    #       will process the signal
+    def stuff1(self):
+        print('entered substate 1')
+        self.done.emit()
+
+    def stuff2(self):
+        print('entered substate 2')
+        self.done.emit()
 
     def print_state(self, state):
         print(state)

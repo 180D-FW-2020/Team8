@@ -44,7 +44,8 @@ import audio
 for lib in PATH:
     sys.path.remove(lib)
 
-DRES = 1280,720 # resolution
+DRESW = 1280 # resolution width
+DRESH = 720 # res height
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
@@ -207,6 +208,7 @@ class DisplayWidget(QWidget):
         # self.processMasks()
         self.image = self._array2qimage(image)
         self.setFixedSize(self.image.size())
+        # print(self.image.size())
         self.update()
 
     #### IMAGE PROCESSING SLOTS ####
@@ -239,6 +241,8 @@ class TestVideo(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cap = cv.VideoCapture(0)
+        # self.cap.set(3, DRESW)
+        # self.cap.set(4, DRESH)
         self.trigger = QBasicTimer()
 
     # @desc
@@ -266,21 +270,49 @@ class MainWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # widgets and objects
         self.display = DisplayWidget()
         self.video = TestVideo()
         self.start_button = QPushButton('START')
-        self.audiomodule = AudioObject({'testing':False})
+        self.audio_phrases = {}
+        self.audio_recognizer = AudioObject(self.audio_phrases)
 
+        # state machine
+        self.state_machine = QStateMachine()
+
+        self.s_main = QState(childMode=1) # parallel child states
+        self.s_img = QState(self.s_main)
+        self.s_msg = QState(self.s_main)
+        self.s_msg_listen = QState(self.s_msg)
+        self.s_msg_send = QState(self.s_msg)
+        self.s_msg.setInitialState(self.s_msg_listen)
+
+        self.s_cal = QState()
+        self.s_cal_ht = QState(self.s_cal)
+        self.s_cal_wave = QState(self.s_cal)
+        self.s_cal.setInitialState(self.s_cal_ht)
+
+        self.state_machine.setInitialState(self.s_cal)
+        self.state_machine.addState(self.s_cal)
+        self.state_machine.addState(self.s_main)
+        self.state_machine.start()
+        # state signals
+        
+
+        # signals and slots
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
-        self.audiomodule.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
+        self.audio_recognizer.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
 
+        # layout
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.display)
         self.layout.addWidget(self.start_button)
         self.setLayout(self.layout)
 
+
+        # threading
         self.threadpool = QThreadPool()
 
     def deleteWidget(self, widget):
@@ -291,7 +323,7 @@ class MainWidget(QWidget):
     # @desc
     # handles double click event for all widgets in UI
     def mouseDoubleClickEvent(self, event):
-        worker = JobRunner(self.audiomodule.speechHandler)
+        worker = JobRunner(self.audio_recognizer.speechHandler)
         self.threadpool.start(worker)
 
 
