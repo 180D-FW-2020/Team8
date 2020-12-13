@@ -83,6 +83,10 @@ class JobRunner(QRunnable):
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.output.emit(output)
+        finally:
+            self.signals.done.emit()
 
 
 class MQTTNetObject:
@@ -194,7 +198,7 @@ class DisplayWidget(QWidget):
 
     # TODO
     # should take member masks 
-    def processMasks(self.mask_homography, self.mask_handtrack):
+    def processMasks():
         pass
 
     # @desc 
