@@ -280,6 +280,13 @@ class MainWidget(QWidget):
         # state machine
         self.state_machine = QStateMachine()
 
+        self.s_start = QState()
+        
+        self.s_cal = QState()
+        self.s_cal_ht = QState(self.s_cal)
+        self.s_cal_wave = QState(self.s_cal)
+        self.s_cal.setInitialState(self.s_cal_ht)
+
         self.s_main = QState(childMode=1) # parallel child states
         self.s_img = QState(self.s_main)
         self.s_msg = QState(self.s_main)
@@ -287,15 +294,6 @@ class MainWidget(QWidget):
         self.s_msg_send = QState(self.s_msg)
         self.s_msg.setInitialState(self.s_msg_listen)
 
-        self.s_cal = QState()
-        self.s_cal_ht = QState(self.s_cal)
-        self.s_cal_wave = QState(self.s_cal)
-        self.s_cal.setInitialState(self.s_cal_ht)
-
-        self.state_machine.setInitialState(self.s_cal)
-        self.state_machine.addState(self.s_cal)
-        self.state_machine.addState(self.s_main)
-        self.state_machine.start()
         # state signals
         
 
@@ -311,6 +309,11 @@ class MainWidget(QWidget):
         self.layout.addWidget(self.start_button)
         self.setLayout(self.layout)
 
+        # state machine init
+        self.state_machine.setInitialState(self.s_cal)
+        self.state_machine.addState(self.s_cal)
+        self.state_machine.addState(self.s_main)
+        self.state_machine.start()
 
         # threading
         self.threadpool = QThreadPool()
