@@ -60,7 +60,7 @@ class MQTTLink:
             self.client.on_disconnect = self.__on_disconnect_subscriber
             self.client.on_message = self.__on_message
 
-        self.client.connect_async('mqtt.eclipse.org')
+        self.client.connect_async('mqtt.eclipseprojects.io')
 
     def __del__(self):
         self.client.disconnect()
@@ -137,25 +137,3 @@ class MQTTLink:
             print("Error: not Tx")
         self.client.loop_stop()
         self.client.disconnect()
-
-
-# defining for test script
-if __name__ == '__main__':
-
-    # Note: make sure you are reading values from a subscriber on the same board to see the result
-    # Start a client
-    mqtt_tx = MQTTLink("tx","ece180d/team8")
-
-    # Add data
-    mqtt_tx.addText("some text", "Jack", "John")
-    mqtt_tx.addWeather("sunny", 69, 75, 50)
-    mqtt_tx.addNews("https://www.youtube.com/watch?v=oHg5SJYRHA0", "important information")
-    
-    # Send
-    mqtt_tx.send()
-
-    
-    # Test Rx
-    mqtt_rx = MQTTLink("rx", "ece180d/team8")
-    mqtt_rx.listen(20.0)
-    print(json.dumps(mqtt_rx.get_message()))
