@@ -465,7 +465,8 @@ class MainWidget(QWidget):
         self._phraseOptionHandler(self.s_img_confirm, img_confirm_handler)
         self.s_img_confirm.addTransition(self.yesSignal, self.s_img_display)
         self.s_img_confirm.addTransition(self.noSignal, self.s_img_init)
-        # self.audio_recognizer.detected_phrase.connect(someHomographyProcess during s_img_display)
+        # AUDIO TRANSITIONS TEST VIDEO -> HOMOGRAPHY IMG OVERLAY STATE
+        self.audio_recognizer.detected_phrase.connect(self.video.next)
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
