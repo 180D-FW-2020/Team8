@@ -146,16 +146,14 @@ class TestVideo(QObject):
             self.image_data.emit(frame)
 
 # @desc
-# test class for opencv video feed with ar video overlay
-# todo: separate mask from frame processing
-class VideoOverlayCarousel(QObject):
+# class for opencv image carousel using ar overlay
+class ImageOverlayCarousel(QObject):
     image_data = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cap = cv.VideoCapture(0)
         self.model = cv.imread('model.png')
-        self.overlay = [cv.VideoCapture('video.mp4'), cv.VideoCapture('video2.mp4')]
-        self.counter = 0
+        self.overlay = [cv.imread('model.png'), cv.imread('model.png')]
         self.trigger = QBasicTimer()
 
     # @desc
@@ -165,38 +163,23 @@ class VideoOverlayCarousel(QObject):
         self.trigger.start(0, self)
 
     # run video embedder
-    def run(self, videoimage, cameraimage):
+    def run(self, overlayimage, cameraimage):
         i = 1                                               # index for vid carousel
         height, width, c = self.model.shape
 
         orb = cv.ORB_create(nfeatures=1000)
         kp1, des1 = orb.detectAndCompute(self.model, None)           
 
-        targetDetected = False
-        videoimage = cv.resize(videoimage, (width, height))  # resize image to fit model image dimensions
+        overlayimage = cv.resize(overlayimage, (width, height))  # resize image to fit model image dimensions
         augmentedimage = cameraimage.copy()
 
         kp2, des2 = orb.detectAndCompute(cameraimage, None)
-
-        if targetDetected == False:
-            self.overlay[i].set(cv.CAP_PROP_POS_FRAMES, 0)
-            self.counter = 0
-        else:
-            if self.counter >= self.overlay[i].get(cv.CAP_PROP_FRAME_COUNT):
-                self.overlay[i].set(cv.CAP_PROP_POS_FRAMES, 0)
-                self.counter = 0
-            self.overlay[i].set(cv.CAP_PROP_POS_FRAMES, self.counter)
-            retval, videoimage = self.overlay[i].read()
-            videoimage = cv.resize(videoimage, (width, height))           # resize video to fit model image dimensions
-
         matches = self.generateMatches(des1, des2)
         #print(len(matches))
 
         if len(matches) > 230:
-            targetDetected = True
-            augmentedimage = self.embed(cameraimage, videoimage, kp1, kp2, matches, augmentedimage, height, width)                                                 
+            augmentedimage = self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)                                                 
         
-        self.counter += 1
         return augmentedimage
 
     # generates matches between two image descriptors
@@ -212,14 +195,14 @@ class VideoOverlayCarousel(QObject):
     # does video embed in camera image
     # @param
     # cameraimage: cap.read() camera image
-    # videoimage: video overlay read() image
+    # overlayimage: overlay image
     # kp1: model keypoints
     # kp2: camera image keypoints
     # matches: BFMatcher between model and camera image descriptors
     # augmentedimage: camera feed with video overlay
     # height: height of mask
     # width: width of mask
-    def embed(self, cameraimage, videoimage, kp1, kp2, matches, augmentedimage, height, width):
+    def embed(self, cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width):
         srcpts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
         dstpts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
         matrix, mask = cv.findHomography(srcpts, dstpts, cv.RANSAC, 5)
@@ -227,7 +210,7 @@ class VideoOverlayCarousel(QObject):
         points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
         dst = cv.perspectiveTransform(points, matrix)
         
-        warpedimage = cv.warpPerspective(videoimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
+        warpedimage = cv.warpPerspective(overlayimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
 
         newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
         cv.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))
@@ -243,10 +226,10 @@ class VideoOverlayCarousel(QObject):
             print("timer shit fucked up")
             return
 
-        retval, videoimage = self.overlay[1].read()
+        overlayimage = self.overlay[1]
         retval, cameraimage = self.cap.read()
-        augmentedimage = self.run(videoimage, cameraimage)
-        self.image_data.emit(augmentedimage)
+        augmentedimage = self.run(overlayimage, cameraimage)
+        self.image_data.emit(cameraimage)
 
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
@@ -258,7 +241,7 @@ class MainWidget(QWidget):
         self.windowTitleChanged.connect(lambda: self.alertWindowChanged()) # example of event-based flow for updating ui data
 
         self.display = DisplayWidget()
-        self.video = VideoOverlayCarousel()
+        self.video = ImageOverlayCarousel()
         self.start_button = QPushButton('START')
 
         self.video.image_data.connect(lambda x: self.display.setImage(x))
