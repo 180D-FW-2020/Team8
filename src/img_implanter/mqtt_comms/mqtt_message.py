@@ -69,35 +69,28 @@ class MQTTLink:
         #only listen if a reciever is initiated
         if self.rx:
             if duration == -1:
-                self.client.loop_start()
-                while True:
-                    pass
-                self.client.loop_stop()
+                self.client.loop_forever()
             else:
                 self.client.loop_start()
                 time.sleep(duration)
-                #tic = time.perf_counter()
-                #toc = time.perf_counter()
-                #while (toc-tic < duration):
-                #    pass
-                #self.client.loop_stop()
+                self.client.loop_stop()
             
         else:
             print("Error: not rx")
 
-    def get_message(self):
+    def getMessage(self):
         return self.message["messages"]
 
     def __addMessage(self, message_content):
             self.message["messages"].append(message_content)
 
-    def addText(self, text, reciever, sender):
+    def addText(self, text, receiver, sender):
         now = datetime.datetime.now()
         msg = {
             "message_type" : "text",
             "data" : text,
             "sender" : sender, 
-            "reciever" : reciever,
+            "receiver" : receiver,
             "time":{
 
                 "hour":now.hour,
@@ -137,3 +130,6 @@ class MQTTLink:
             print("Error: not Tx")
         self.client.loop_stop()
         self.client.disconnect()
+
+
+    
