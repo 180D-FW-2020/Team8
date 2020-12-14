@@ -44,7 +44,8 @@ import audio
 for lib in PATH:
     sys.path.remove(lib)
 
-DRES = 1280,720 # resolution
+DRESW = 1280 # resolution width
+DRESH = 720 # res height
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
@@ -148,12 +149,19 @@ class AreaSelectObject:
 
 class AudioObject(QObject):
     detected_phrase = pyqtSignal(str)
+    transcribed_phrase = pyqtSignal(str)
     def __init__(self, keyphrases : dict, parent=None):
         super().__init__(parent)
         self.recognizer = audio.SpeechRecognizer(keyphrases)
-        # self.timer = QTimer()
-        # self.timer.setSingleShot(True)
-        # self.timer.timeout.connect(lambda: self.recognizer.teardown())
+
+    # @desc
+    # emits a string containing the most recently transcribed phrase
+    def sendCurrentPhrase(self):
+        s = self.recognizer.current_phrase
+        if s != None:
+            self.transcribed_phrase.emit(s)
+        else:
+            print("error: current phrase is null")
 
     # @desc
     # waits for a keyphrase to be found, then returns the first detected phrase
@@ -165,8 +173,8 @@ class AudioObject(QObject):
                     if found:
                         self.recognizer.resetDetection(phrase)
                         self.detected_phrase.emit(phrase)
-                        self.recognizer.teardown()
-                        end = True
+                        # self.recognizer.teardown()
+                    # end = True
         except TypeError:
             pass
         except ValueError:
@@ -207,6 +215,7 @@ class DisplayWidget(QWidget):
         # self.processMasks()
         self.image = self._array2qimage(image)
         self.setFixedSize(self.image.size())
+        # print(self.image.size())
         self.update()
 
     #### IMAGE PROCESSING SLOTS ####
@@ -239,6 +248,8 @@ class TestVideo(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cap = cv.VideoCapture(0)
+        # self.cap.set(3, DRESW)
+        # self.cap.set(4, DRESH)
         self.trigger = QBasicTimer()
 
     # @desc
@@ -263,25 +274,130 @@ class TestVideo(QObject):
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
 class MainWidget(QWidget):
+    yesSignal = pyqtSignal()
+    noSignal = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # widgets and objects
         self.display = DisplayWidget()
-        self.video = TestVideo()
         self.start_button = QPushButton('START')
-        self.audiomodule = AudioObject({'testing':False})
+        self.video = TestVideo()
+        self.audio_phrases = {}
+        self.audio_recognizer = AudioObject(self.audio_phrases)
+        self.layout = QVBoxLayout()
+        self.setMainLayout()
 
+        # state machine
+        self.state_machine = QStateMachine()
+
+        self.s_start = QState()
+        
+        self.s_cal = QState()
+        self.s_cal_ht = QState(self.s_cal)
+        self.s_cal_wave = QState(self.s_cal)
+        self.s_cal_fin = QFinalState(self.s_cal)
+        self.s_cal.setInitialState(self.s_cal_ht)
+
+        self.s_main = QState(childMode=1) # parallel child states
+
+        self.s_img = QState(self.s_main)
+        self.s_img_init = QState(self.s_img)
+        self.s_img_find = QState(self.s_img)
+        self.s_img_confirm = QState(self.s_img)
+        self.s_img_display = QState(self.s_img)
+        self.s_img.setInitialState(self.s_img_init)
+
+        self.s_msg = QState(self.s_main)
+        self.s_msg_init = QState(self.s_msg)
+        self.s_msg_listen = QState(self.s_msg)
+        self.s_msg_confirm = QState(self.s_msg)
+        self.s_msg_send = QState(self.s_msg)
+        self.s_msg.setInitialState(self.s_msg_init)
+
+        # state signals
+        # TODO; need module objects to set up more signals/slots
+            
+        # signal creation for states with keyphrases
+        states_with_phrases = {
+                                self.s_cal_ht : 'okay',
+                                self.s_img_init : 'place',
+                                self.s_img_display : 'next',
+                                self.s_img_confirm : 'yes',
+                                self.s_img_confirm : 'no',
+                                self.s_msg_init : 'message',
+                                self.s_msg_confirm : 'yes',
+                                self.s_msg_confirm : 'no'
+                            }
+        for state, phrase in states_with_phrases.items():
+            self._setStatePhrase(state, phrase)
+
+        self.s_start.addTransition(self.start_button.clicked, self.s_cal)
+        self.calibrationStateHandler()
+        self.messageStateHandler()
+        self.imageStateHandler()
+
+        # signals and slots
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
-        self.audiomodule.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
+        self.audio_recognizer.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
 
-        self.layout = QVBoxLayout()
+        # state machine init
+        self.state_machine.addState(self.s_start)
+        self.state_machine.addState(self.s_cal)
+        self.state_machine.addState(self.s_main)
+        self.state_machine.setInitialState(self.s_start)
+        self.state_machine.start()
+
+        # threading
+        self.threadpool = QThreadPool()
+
+    def calibrationStateHandler(self):
+        self.s_cal.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
+        # self.s_cal_ht.addTransition(SOMESIG, self.s_cal_wave)
+        # self.s_cal_wave.addTransition(SOMESIG, self.s_cal_fin)
+        self.s_cal.addTransition(self.s_cal.finished, self.s_main)
+
+    def messageStateHandler(self):
+        self.s_msg_init.addTransition(self.audio_recognizer.detected_phrase, self.s_msg_listen)
+        self.s_msg_listen.entered.connect(self.messageListenSlot)
+        self.s_msg_listen.addTransition(self.audio_recognizer.transcribed_phrase, self.s_msg_confirm)
+        # self.s_msg_confirm.entered.connect('''ask user to confirm, and print transcribed phrase''')
+        msg_confirm_handler = lambda x: self.confirmSlot(x)
+        self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)
+        self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
+        self.s_msg_confirm.addTransition(self.noSignal, self.s_msg_listen)
+        # self.s_msg_send.addTransition(someMQTTsignal, self.s_msg_init)
+
+    def imageStateHandler(self):
+        self.s_img_init.addTransition(self.audio_recognizer.detected_phrase, self.s_img_find)
+        # self.s_img_find.addTransition(someFlatSurfacesignal, self.s_img_confirm)
+        img_confirm_handler = lambda x: self.confirmSlot(x)
+        self._phraseOptionHandler(self.s_img_confirm, img_confirm_handler)
+        self.s_img_confirm.addTransition(self.yesSignal, self.s_img_display)
+        self.s_img_confirm.addTransition(self.noSignal, self.s_img_init)
+        # self.audio_recognizer.detected_phrase.connect(someHomographyProcess during s_img_display)
+
+    # NOTE: replace message slots with textwidget functions or smth if desired
+    def messageListenSlot(self):
+        self.audio_recognizer.recognizer.resetCurrentPhrase()
+        time.sleep(5)
+        self.audio_recognizer.sendCurrentPhrase()
+
+    # NOTE: replace message slots with textwidget functions or smth if desired
+    def confirmSlot(self, ans):
+        if ans == 'yes':
+            self.yesSignal.emit()
+        elif ans == 'no':
+            self.noSignal.emit()
+        else:
+            print("error: received phrase is not `yes` nor `no`")
+
+    def setMainLayout(self):
         self.layout.addWidget(self.display)
         self.layout.addWidget(self.start_button)
         self.setLayout(self.layout)
-
-        self.threadpool = QThreadPool()
 
     def deleteWidget(self, widget):
         self.layout.removeWidget(widget)
@@ -289,9 +405,25 @@ class MainWidget(QWidget):
         widget = None
 
     # @desc
-    # handles double click event for all widgets in UI
-    def mouseDoubleClickEvent(self, event):
-        worker = JobRunner(self.audiomodule.speechHandler)
+    # takes a state and a handler function for any detected phrase for that state.
+    # sets up and tears down connection to the handler during the state's existence
+    def _phraseOptionHandler(self, state, handler):
+        h = handler
+        confirm_handle = lambda: self.audio_recognizer.detected_phrase.connect(h)
+        state.entered.connect(confirm_handle)
+        confirm_teardown = lambda: self.audio_recognizer.detected_phrase.disconnect(h)
+        state.exited.connect(confirm_teardown)
+
+    # @desc
+    # adds and removes keyphrases for audio recog's hotphrase list during a state's existence
+    def _setStatePhrase(self, state, phrase):
+        add_phrase = lambda: self.audio_recognizer.recognizer.addKeyphrase(phrase)
+        rm_phrase = lambda: self.audio_recognizer.recognizer.removeKeyphrase(phrase)
+        state.entered.connect(add_phrase)
+        state.exited.connect(rm_phrase)
+
+    def __create_worker(self, func):
+        worker = JobRunner(func)
         self.threadpool.start(worker)
 
 
