@@ -9,6 +9,8 @@ class SpeechRecognizer:
         self.recog = sr.Recognizer()
         self.phrases = keyphrases
         self.stop_listening = None
+        self.current_phrase = None
+        # self.callback = lambda: pass
 
     def listenForPhrases(self):
         new_mic = sr.Microphone()
@@ -31,7 +33,9 @@ class SpeechRecognizer:
     def _recognize_in_background(self, recognizer, audio):
         try:
             out = self.recog.recognize_sphinx(audio)
-            print("Sphinx heard: " + out)
+            # self.callback()
+            # print("Sphinx heard: " + out)
+            self.current_phrase = out
             for phrase in self.phrases:
                 if phrase in out:
                     self.phrases[phrase] = True
@@ -39,6 +43,12 @@ class SpeechRecognizer:
             print("Sphinx could not understand audio")
         except sr.RequestError as err:
             print("Sphinx error; {0}".format(err))
+
+    # def setCallback(self, func, *args, **kwargs):
+    #     self.callback = func
+
+    def resetCurrentPhrase(self):
+        self.current_phrase = None
 
     def resetDetection(self, phrase):
         self.phrases[phrase] = False
