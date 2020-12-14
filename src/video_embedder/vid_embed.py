@@ -98,6 +98,7 @@ class VideoEmbedder:
         newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
         cv2.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))
         invertedmask = cv2.bitwise_not(newmask)
+        cv2.imshow('mask', invertedmask)
         augmentedimage = cv2.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)
         augmentedimage = cv2.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
