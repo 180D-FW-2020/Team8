@@ -10,21 +10,16 @@ PATH = [
         # '../training/classifier_training',
         # '../video_embedder',
         # '../static_ar_exploration',
-        # '../img_implanter/mqtt_comms',
+        '../img_implanter/mqtt_comms',
         '../envrd/audio',
         # '../envrd/gesture_detector',
         # '../env_reader/image_tracking/hand_tracker'
        ]
 
 import sys
-print("path is ")
-for p in sys.path: 
-    print(p)
-print("appending...")
+
 for lib in PATH:
     sys.path.append(lib)
-for p in sys.path: 
-    print(p)
 
 import time
 # from os import path
@@ -35,7 +30,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import threading
 # import IMU
-# import mqtt_message
+import message_placer as placer
+import mqtt_link as mqtt
 import audio
 # import hand_tracker
 # import static_homography
@@ -44,7 +40,8 @@ import audio
 for lib in PATH:
     sys.path.remove(lib)
 
-DRES = 1280,720 # resolution
+DRESW = 640
+DRESH = 480
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
@@ -88,63 +85,19 @@ class JobRunner(QRunnable):
         finally:
             self.signals.done.emit()
 
+## MQTT QObject Class #######################################################################################################
+class MQTTNetObject(QObject, mqtt.MQTTLink):
+    new_message = pyqtSignal(str)
+    def __init__(self, *args, parent=None, **kwargs):
+        super().__init__(parent, *args, **kwargs)
 
-class MQTTNetObject:
-    def __init__(self):
-        #TODO
-        pass
-
-
-class IMUSampleObject:
-    # def __init__(self, window_length, overlap, sample_period):
-    #     self.window_length = window_length #number of Samples
-    #     self.classifier    = gest_classifier(2,6*window_length)
-    #     self.length_sample = 6
-    #     self.data    = [None]*self.length_sample*window_length
-    #     self.reading = [None]*self.length_sample*overlap
-    #     self.overlap = overlap
-    #     self.samples_taken = 0
-    #     self.sample_period = sample_period
-
-    #     #initialize sensor
-    #     IMU.detectIMU()
-    #     if(IMU.BerryIMUversion == 99):
-    #         print(" No BerryIMU found...sick nasty")
-    #         sys.exit()
-    #     IMU.initIMU() # initialize all the relevant sensors
-
-    # def sample(self):
-    #     ACCx = IMU.readACCx()
-    #     ACCy = IMU.readACCy()
-    #     ACCz = IMU.readACCz()
-    #     GYRx = IMU.readGYRx()
-    #     GYRy = IMU.readGYRy()
-    #     GYRz = IMU.readGYRz()
-    #     self.reading[self.samples_taken*self.length_sample]      = ACCx
-    #     self.reading[self.samples_taken*self.length_sample + 1 ] = ACCy
-    #     self.reading[self.samples_taken*self.length_sample + 2 ] = ACCz
-    #     self.reading[self.samples_taken*self.length_sample + 3 ] = GYRx
-    #     self.reading[self.samples_taken*self.length_sample + 4 ] = GYRy
-    #     self.reading[self.samples_taken*self.length_sample + 5 ] = GYRz
+    def receiveMessage(self, message):
+        form_message = message['sender'] + ": " + message['data']
+        self.new_message.emit(form_message)
         
-    #     self.samples_taken += 1
-
-    #     if not(self.samples_taken % self.overlap):
-    #         self.data = np.roll(self.data, (self.window_length - self.overlap)*6)
-    #         self.data[-self.overlap:] = self.reading
-    #         self.samples_taken = 0
-    #         self.classifier.classify(self.data) #TODO make event triggering on this result
-
-    # def run(self):
-    #     threading.Timer(self.sample_period, self.sample).start()
-    pass
-
-
-class AreaSelectObject:
-    def __init__(self):
-        #TODO
-        pass
-
+    def sendMessage(self, message, receiver, sender):
+        self.addText(message, receiver, sender)
+        self.send()
 
 class AudioObject(QObject):
     detected_phrase = pyqtSignal(str)
@@ -177,7 +130,41 @@ class AudioObject(QObject):
         self.recognizer.listenForPhrases()
         self.recordDetection()
 
+class MessageBoard(QWidget):
+    board_image = pyqtSignal(np.ndarray)
+    def __init__(self, username, num_messages=5, parent=None):
+        super().__init__(parent)
+        # get an MQTT link
+        self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
+        self.placer = placer.MessagePlacer("br", num_messages)
 
+        # get a username
+        self.username = 'dft_username'
+
+        # set up message reading
+        self.num_messages = num_messages
+        self.messages = []
+
+        # update message list upon new message
+        self.messenger.new_message.connect(lambda message: self.__update_messages(message))
+
+    def __update_messages(self, new_message):
+        # append messages so that the last message printed is at bottom
+        self.messages.append(new_message)
+        print(self.messages)
+
+        # cut it off at 5
+        if len(self.messages) > self.num_messages:
+            del self.messages[0]
+
+    def placeBoard(self, frame):
+        frame = self.placer.placeMessages(self.messages, frame)
+        frame = self.placer.placeUserMessage(self.username + ": ", frame)
+        self.board_image.emit(frame)
+
+    def receive(self):
+        self.messenger.listen()
+    
 # @desc
 # widget for handling a display from an opencv source
 class DisplayWidget(QWidget):
@@ -231,7 +218,6 @@ class DisplayWidget(QWidget):
         p.drawImage(0, 0, self.image)
         self.image = QImage()
 
-
 # @desc
 # test class for opencv video feed -> replace with any np array
 class TestVideo(QObject):
@@ -239,6 +225,8 @@ class TestVideo(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cap = cv.VideoCapture(0)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, DRESW)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, DRESH)
         self.trigger = QBasicTimer()
 
     # @desc
@@ -258,7 +246,6 @@ class TestVideo(QObject):
         if read:
             self.image_data.emit(frame)
 
-
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
@@ -268,10 +255,12 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = TestVideo()
+        self.board = MessageBoard('default_username')
         self.start_button = QPushButton('START')
         self.audiomodule = AudioObject({'testing':False})
 
-        self.video.image_data.connect(lambda x: self.display.setImage(x))
+        self.video.image_data.connect(lambda image: self.board.placeBoard(image))
+        self.board.board_image.connect(lambda image: self.display.setImage(image))
         self.start_button.clicked.connect(self.video.start)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
         self.audiomodule.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
@@ -283,6 +272,12 @@ class MainWidget(QWidget):
 
         self.threadpool = QThreadPool()
 
+        self.__create_worker(self.board.receive)
+
+    def __create_worker(self, func):
+        worker = JobRunner(func)
+        self.threadpool.start(worker)
+
     def deleteWidget(self, widget):
         self.layout.removeWidget(widget)
         widget.deleteLater()
@@ -291,9 +286,7 @@ class MainWidget(QWidget):
     # @desc
     # handles double click event for all widgets in UI
     def mouseDoubleClickEvent(self, event):
-        worker = JobRunner(self.audiomodule.speechHandler)
-        self.threadpool.start(worker)
-
+        self.__create_worker(self.audiomodule.speechHandler)
 
 # @desc
 # initializes all UI widgets
