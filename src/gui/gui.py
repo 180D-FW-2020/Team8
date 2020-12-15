@@ -232,7 +232,7 @@ class HandTracker(QObject):
     hand_image = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.tracker = hand_tracker.hand_tracker((160, 200, 200), (120, 100, 50), [0.5, 0.25, 0.25], debug=True) # values for upper_HSV, lower_HSV, can be changed
+        self.tracker = hand_tracker.hand_tracker((160, 200, 200), (120, 100, 50), [0.5, 0.25, 0.25], debug=False) # values for upper_HSV, lower_HSV, can be changed
 
     def findHand(self, frame):
         frame, loc = self.tracker.locAdder(frame)
