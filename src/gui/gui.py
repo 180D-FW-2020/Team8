@@ -199,6 +199,33 @@ class MessageBoard(QWidget):
     def receive(self):
         self.messenger.listen()
 
+class IMUBoard(QWidget):
+    # CONSOLIDATE WITH MESSAGEBOARD - REFACTOR
+    board_image = pyqtSignal(np.ndarray)
+    def __init__(self, num_lines=2, parent=None):
+        super().__init__(parent)
+        # get an MQTT link
+        self.messenger = MQTTNetObject(board="ece180d/MEAT/imu")
+        self.board_shape = (40, 400)
+        self.placer = placer.BoardPlacer(self.board_shape, "tl", num_lines)
+
+        # set up message reading
+        self.num_lines = num_lines
+
+        # update message list upon new message
+        self.messenger.new_message.connect(lambda message: self.__update_messages(message))
+
+    def __update_messages(self, new_message):
+        # append messages so that the last message printed is at bottom
+        self.placer.updateChatBoard(new_message)
+
+    def placeBoard(self, frame):
+        frame = self.placer.placeBoard(frame)
+        self.board_image.emit(frame)    
+    
+    def receive(self):
+        self.messenger.listen()
+
 ## Hand Tracker QObject Class #######################################################################################################
 ## tracks hand in UI by placing box where it sees the hand
 class HandTracker(QObject):
@@ -419,7 +446,8 @@ class MainWidget(QWidget):
 
         # widgets and objects
         self.display = DisplayWidget()
-        self.board = MessageBoard('default_username')
+        self.text_board = MessageBoard('default_username')
+        self.imu_board = IMUBoard()
         self.start_button = QPushButton('START')
         self.tracker = HandTracker()
         # self.video = TestVideo()
@@ -502,12 +530,13 @@ class MainWidget(QWidget):
         self.imageStateHandler()
 
         # signals and slots
-        # self.video.image_data.connect(lambda x: self.board.placeBoard(x)) # image_data is handed to the board first
-        self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
-        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
+        # self.video.image_data.connect(lambda x: self.text_board.placeBoard(x)) # image_data is handed to the board first
+        self.frame_data.connect(lambda x: self.text_board.placeBoard(x)) 
+        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.text_board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
-        # self.board.board_image.connect(lambda x: self.display.setImage(x))
-        self.board.board_image.connect(lambda x:self.tracker.findHand(x))
+        # self.text_board.board_image.connect(lambda x: self.display.setImage(x))
+        self.text_board.board_image.connect(lambda x:self.imu_board.placeBoard(x))
+        self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
         self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
@@ -564,7 +593,7 @@ class MainWidget(QWidget):
         
         # then, at end fo 5 seconds, transition to confirming the message
         self.s_msg_listen.addTransition(self.audio_recognizer.transcribed_phrase, self.s_msg_confirm)
-        self.s_msg_listen.entered.connect(self.board.listenUserMessage)
+        self.s_msg_listen.entered.connect(self.text_board.listenUserMessage)
 
         msg_confirm_handler = lambda x: self.confirmSlot(x)
         self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)      ## connections to msg
@@ -573,7 +602,7 @@ class MainWidget(QWidget):
         self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
 
         # send back to init state
-        self.s_msg_send.entered.connect(self.board.sendUserMessage)
+        self.s_msg_send.entered.connect(self.text_board.sendUserMessage)
         self.s_msg_send.addTransition(self.s_msg_send.entered, self.s_msg_init)
 
         # transition back to listening if user doesn't like message
@@ -624,7 +653,8 @@ class MainWidget(QWidget):
         self.threadpool.start(worker)
 
     def __mqtt_thread(self):
-        self.__create_worker(self.board.receive)
+        self.__create_worker(self.text_board.receive)
+        self.__create_worker(self.imu_board.receive)
 
     def deleteWidget(self, widget):
         self.layout.removeWidget(widget)
