@@ -247,8 +247,9 @@ class TestVideo(QObject):
         self.trigger.start(0, self)
 
     # SIGNAL EMULATING ENTERED STATE
-    def next(self):
-        self.entered_img_state = not self.entered_img_state
+    def next(self, keyphrase):
+        if(keyphrase == 'homography'):
+            self.entered_img_state = not self.entered_img_state
 
     # @desc
     # handles timer events triggered by this class
@@ -466,7 +467,7 @@ class MainWidget(QWidget):
         self.s_img_confirm.addTransition(self.yesSignal, self.s_img_display)
         self.s_img_confirm.addTransition(self.noSignal, self.s_img_init)
         # AUDIO TRANSITIONS TEST VIDEO -> HOMOGRAPHY IMG OVERLAY STATE
-        self.audio_recognizer.detected_phrase.connect(self.video.next)
+        self.audio_recognizer.detected_phrase.connect(lambda x: self.video.next(x))
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
