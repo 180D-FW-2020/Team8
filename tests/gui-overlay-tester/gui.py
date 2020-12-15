@@ -259,6 +259,7 @@ class TestVideo(QObject):
         self.trigger = QBasicTimer()
         self.overlayer = ImageOverlayCarousel()
         self.enteredstate = 0
+        self.index = 0
 
     # @desc
     # event trigger for an instantaneous event; use when an event overload is not desired
@@ -268,6 +269,9 @@ class TestVideo(QObject):
 
     def next(self):
         self.enteredstate = not self.enteredstate
+    
+    def rotateCarousel(self):
+        self.overlayer.next()
 
     # @desc
     # handles timer events triggered by this class
@@ -388,15 +392,19 @@ class MainWidget(QWidget):
 
         self.start_button = QPushButton('START')
         self.next_button = QPushButton('NEXT')
+        self.carousel_button = QPushButton('CAROUSEL')
 
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
         self.next_button.clicked.connect(self.video.next)
+        self.carousel_button.clicked.connect(self.video.rotateCarousel)
 
         layout = QVBoxLayout()
         layout.addWidget(self.display)
         layout.addWidget(self.start_button)
         layout.addWidget(self.next_button)
+        layout.addWidget(self.carousel_button)
+
         self.setLayout(layout)
 
         """
