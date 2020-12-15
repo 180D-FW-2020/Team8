@@ -15,28 +15,34 @@ import numpy as np
 class hand_tracker:
 
     def __init__(self, upper_HSV, lower_HSV, filter_coeff =[],debug=False):
-        self.camera = cv.VideoCapture(0)
-        # error opening
-        if not (self.camera.isOpened()):
-            print("Could not open video device")
-
         self.upper_HSV = upper_HSV
         self.lower_HSV = lower_HSV
+        self.range_HSV = [10, 20, 20]
         self.locations = []
         for i in range(len(filter_coeff)):
             self.locations.append((0,0))
         self.filter_coefficients = filter_coeff
-        _,frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         self.debugging = debug
-
-    def __get_frame(self):
-        _, frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-        return
 
     def __color_mask(self, frame):
         return cv.inRange(frame, self.lower_HSV, self.upper_HSV)
+
+    def __increment_HSV(self, pixel):
+        last_HSV = (self.lower_HSV + self.upper_HSV)//2
+        print(last_HSV)
+        diff = np.subtract(last_HSV, pixel)
+        print(diff)
+        next_HSV = last_HSV - diff*0.1
+        print(next_HSV)
+        return np.array(next_HSV, dtype="int16")
+
+    def __fix_mask(self, frame, loc):
+        pixel = frame[loc]
+        print(pixel)
+        next_HSV = self.__increment_HSV(pixel)
+        self.lower_HSV = np.array(np.maximum(next_HSV - self.range_HSV, [0, 0, 0]), dtype="int16")
+        self.upper_HSV = np.array(np.minimum(next_HSV + self.range_HSV, [180, 200, 255]), dtype="int16")
+
 
     def __blur(self, frame, blur_size = (2,2)):
         return cv.blur(frame, blur_size)
@@ -60,15 +66,15 @@ class hand_tracker:
             acc1 += data_point[1]*filter_coeffs[index]
         return (int(acc0),int(acc1))
 
-    def location(self):
-        self.__get_frame()
-        masked = self.__color_mask(self.last_frame)
+    def __location(self, frame):
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        masked = self.__color_mask(frame)
         blurred = self.__blur(masked)
         thresh = self.__bin_threshold(blurred)
-        cv.imshow('frame',self.last_frame)
-
-        cv.imshow('frame',masked)
-
+        
+        if self.debugging:
+            cv.imshow('mask', masked)
+        
         # getting contours
         _, contours, _= cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         if not contours:
@@ -95,13 +101,13 @@ class hand_tracker:
                 angle = np.arccos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c))  #      cosine theorem
                 
                 if self.debugging:
-                    cv.line(self.last_frame,start,end,[64,255,255],2)
-                    cv.circle(self.last_frame,far,5,[0,255,255],-1)
+                    cv.line(frame,start,end,[64,255,255],2)
+                    cv.circle(frame,far,5,[0,255,255],-1)
     
                 if angle <= 3*(np.pi) / 8:  # angle less than 90 degree, treat as fingers
                     cnt += 1
                     if self.debugging:
-                        cv.circle(self.last_frame, far, 4, [120, 255 , 255], -1)
+                        cv.circle(frame, far, 4, [120, 255 , 255], -1)
                     points.append( far)
             if cnt > 0:
                 cnt = cnt+1
@@ -120,24 +126,95 @@ class hand_tracker:
 
             
             if self.debugging:
-                cv.circle(self.last_frame, loc, 4, [0, 0 , 255], -1)
-                cv.putText(self.last_frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
+                cv.circle(frame, loc, 4, [0, 0 , 255], -1)
+                cv.putText(frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
+
+            # self.__fix_mask(hsv, loc)
+
             return loc
+
+    def resetMask(self, frame):
+        pix_loc = frame.shape[0]//2, frame.shape[1]//2
+        pixel = np.array(frame[pix_loc])
+
+        self.lower_HSV = np.array(np.maximum(pixel - self.range_HSV, [0, 0, 0]), dtype="int16")
+        self.upper_HSV = np.array(np.minimum(pixel + self.range_HSV, [180, 200, 255]), dtype="int16")
+
+
+    def locAdder(self, frame):
+        loc = self.__location(frame)
+        return frame, loc
 
 if __name__ == '__main__':
     
+    cap = cv.VideoCapture(0)
+
+    ret, frame = cap.read()
+    frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+    pix_loc = frame.shape[0]//2, frame.shape[1]//2
+    pixel = np.array(frame[pix_loc])
+    # pixel = np.array([40, 100, 100])
+
+    # hsvRange = np.array([10, 50, 50])
+    # lower = np.array(np.maximum(pixel - hsvRange, [0, 0, 0]),dtype="int16")
+    # upper = np.array(np.minimum(pixel + hsvRange, [180, 200, 255]), dtype="int16")
+
+    lower = np.array([140, 48, 80], dtype="uint8")
+    upper = np.array([180, 255, 255], dtype="uint8")
+
     #general testing for dev
-    lower = np.array([0,48,80],dtype="uint8")
-    upper = np.array([20,255,255],dtype="uint8")
-    filter_coeff = np.array([0.5,0.25, 0.25])
+    # filter_size = 5
+    # filter_coeff = np.ones(filter_size, dtype="float32")/filter_size
+    filter_coeff = [0.5, 0.25, 0.25]
     ht = hand_tracker(upper, lower, filter_coeff, True)
 
     while(True):
-        loc = ht.location()
-       # Display the resulting frame
-        cv.imshow('frame',cv.cvtColor(ht.last_frame,cv.COLOR_HSV2BGR))
+        ret, frame = cap.read()
+        frame, _ = ht.locAdder(frame)
 
-        if cv.waitKey(1) & 0xFF == ord('q'):
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        pix_loc = frame.shape[0]//2, frame.shape[1]//2
+
+        hsv_planes = cv.split(frame)
+        h_histSize = 90
+        sv_histSize = 128
+        h_histRange = (0, 180)
+        sv_histRange = (0, 256) # the upper boundary is exclusive
+        accumulate = False
+        h_hist = cv.calcHist(hsv_planes, [0], None, [histSize], histRange, accumulate=accumulate)
+        s_hist = cv.calcHist(hsv_planes, [1], None, [histSize], histRange, accumulate=accumulate)
+        v_hist = cv.calcHist(hsv_planes, [2], None, [histSize], histRange, accumulate=accumulate)
+        hist_w = 512
+        hist_h = 400
+        bin_w = int(round( hist_w/histSize ))
+        histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
+        cv.normalize(h_hist, h_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
+        cv.normalize(s_hist, s_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
+        cv.normalize(v_hist, v_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
+
+        for i in range(1, histSize):
+            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(h_hist[i-1])) ),
+                    ( bin_w*(i), hist_h - int(np.round_(h_hist[i])) ),
+                    ( 255, 0, 0), thickness=2)
+            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(s_hist[i-1])) ),
+                    ( bin_w*(i), hist_h - int(np.round_(s_hist[i])) ),
+                    ( 0, 255, 0), thickness=2)
+            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(v_hist[i-1])) ),
+                    ( bin_w*(i), hist_h - int(np.round_(v_hist[i])) ),
+                    ( 0, 0, 255), thickness=2)
+
+        cv.imshow('histogram', histImage)
+
+        # print(hsv[pix_loc])
+        # Display the resulting frame
+        cv.imshow('frame',frame)
+
+        k = cv.waitKey(1)
+
+        if k == ord('r'):
+            ht.resetMask(frame)
+
+        elif k == ord('q'):
              break
 
     cv.destroyAllWindows()
