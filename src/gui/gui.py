@@ -22,6 +22,10 @@ for lib in PATH:
     sys.path.append(lib)
 
 import time
+try:
+    import Queue
+except:
+    import queue as Queue
 # from os import path
 import cv2 as cv
 import numpy as np
@@ -269,6 +273,29 @@ class TestVideo(QObject):
         if read:
             self.image_data.emit(frame)
 
+# @ desc
+# threadbale video class for reading frames from camera capture.
+# places frames into 2-frame buffer queue, from which the main widget reads/emits to modules
+class ThreadVideo(QObject):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.cap = cv.VideoCapture(0)
+        # self.cap.set(cv.CAP_PROP_FRAME_WIDTH, DRESW)
+        # self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, DRESH)
+        # self.cap.set(cv.CAP_PROP_FPS, 30)
+        self.buffer = Queue.Queue()
+
+    def capture_frames(self):
+        while(1):
+            read, frame = self.cap.read()
+            if read:
+                if frame is not None and self.buffer.qsize() < 2:
+                    self.buffer.put(frame)
+                else:
+                    time.sleep(DINTERVAL/1000.0)
+            else:
+                print("unable to grab image") 
+
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
@@ -277,6 +304,7 @@ class MainWidget(QWidget):
     noSignal = pyqtSignal()
     msgEntry = pyqtSignal()
     imgEntry = pyqtSignal()
+    frame_data = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -284,7 +312,9 @@ class MainWidget(QWidget):
         self.display = DisplayWidget()
         self.board = MessageBoard('default_username')
         self.start_button = QPushButton('START')
-        self.video = TestVideo()
+        # self.video = TestVideo()
+        self.video = ThreadVideo()
+        self.frame_timer = QTimer(self)
         self.audio_phrases = {}
         self.audio_recognizer = AudioObject(self.audio_phrases)
         self.layout = QVBoxLayout()
@@ -366,10 +396,13 @@ class MainWidget(QWidget):
         self.imageStateHandler()
 
         # signals and slots
-        self.video.image_data.connect(lambda x: self.board.placeBoard(x))                           # image_data is handed to the board first
+        # self.video.image_data.connect(lambda x: self.board.placeBoard(x)) # image_data is handed to the board first
+        self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.updateUserMessage(x)) # when a phrase is transcribed, board gets it
         self.board.board_image.connect(lambda x:self.display.setImage(x))
-        self.start_button.clicked.connect(self.video.start)
+        # self.start_button.clicked.connect(self.video.start)
+        self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
+        self.start_button.clicked.connect(self._start_video)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
         self.audio_recognizer.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
 
@@ -384,6 +417,18 @@ class MainWidget(QWidget):
         self.threadpool = QThreadPool()
 
         # self.__create_worker(self._print_phrases)
+
+    def _start_video(self):
+        print("starting video...")
+        self.frame_timer.start(DINTERVAL)
+        self.__create_worker(self.video.capture_frames)
+
+    def _pass_image(self, imqueue):
+        if not imqueue.empty():
+            img = imqueue.get()
+            if img is not None and len(img) > 0:
+                # print("emitting frame")
+                self.frame_data.emit(img)
 
     def _print_current_state(self, state, sID):
         state.entered.connect(lambda: print("current state: " + str(sID)))
