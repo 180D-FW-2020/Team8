@@ -280,7 +280,7 @@ class TestVideo(QObject):
         if read and self.enteredstate == 0:
             self.image_data.emit(frame)
         else:
-            self.image_data.emit(self.overlayer.run())
+            self.image_data.emit(self.overlayer.run(frame))
 
 
 # @desc
@@ -289,8 +289,7 @@ class ImageOverlayCarousel(QObject):
     out_image = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.cap = cv.VideoCapture(0)                       # get input frames instead
-        self.model = cv.imread('model.png')
+        self.model = cv.imread('model2.png')
         self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
         self.trigger = QBasicTimer()
         self.counter = 0
@@ -309,9 +308,8 @@ class ImageOverlayCarousel(QObject):
             self.index = 0
 
     # run video embedder
-    def run(self):
+    def run(self, cameraimage):
         overlayimage = self.overlay[self.index]
-        retval, cameraimage = self.cap.read()
         height, width, c = self.model.shape
 
         orb = cv.ORB_create(nfeatures=1000)
