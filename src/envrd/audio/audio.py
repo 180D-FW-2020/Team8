@@ -66,4 +66,3 @@ class SpeechRecognizer:
         if self.stop_listening != None:
             self.stop_listening(wait_for_stop=False)
             self.stop_listening = None
-
