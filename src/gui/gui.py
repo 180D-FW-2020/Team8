@@ -535,7 +535,7 @@ class MainWidget(QWidget):
     def _print_phrases(self):
         while(1):
             time.sleep(1)
-            print(self.audio_recognizer.recognizer.phrases)
+            print(self.audio_recognizer.phrases)
 
     def calibrationStateHandler(self):
         self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
@@ -592,8 +592,9 @@ class MainWidget(QWidget):
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
-        self.audio_recognizer.recognizer.resetCurrentPhrase()
-        self.audio_recognizer.sendCurrentPhrase()
+        self.audio_recognizer.resetCurrentPhrase()
+        self.__create_worker(self.audio_recognizer.sendCurrentPhrase())
+
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def confirmSlot(self, ans):
@@ -654,8 +655,8 @@ class MainWidget(QWidget):
     # adds and removes keyphrases for audio recog's hotphrase list during a state's existence
     def _setStatePhrases(self, state, phrases):
         for phrase in phrases:
-            add_phrase = lambda val=phrase: self.audio_recognizer.recognizer.addKeyphrase(val)
-            rm_phrase = lambda val=phrase: self.audio_recognizer.recognizer.removeKeyphrase(val)
+            add_phrase = lambda val=phrase: self.audio_recognizer.addKeyphrase(val)
+            rm_phrase = lambda val=phrase: self.audio_recognizer.removeKeyphrase(val)
             state.entered.connect(add_phrase)
             state.exited.connect(rm_phrase)
 
