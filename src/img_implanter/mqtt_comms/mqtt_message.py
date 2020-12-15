@@ -60,7 +60,7 @@ class MQTTLink:
             self.client.on_disconnect = self.__on_disconnect_subscriber
             self.client.on_message = self.__on_message
 
-        self.client.connect_async('mqtt.eclipse.org')
+        self.client.connect_async('mqtt.eclipseprojects.io')
 
     def __del__(self):
         self.client.disconnect()
@@ -69,35 +69,28 @@ class MQTTLink:
         #only listen if a reciever is initiated
         if self.rx:
             if duration == -1:
-                self.client.loop_start()
-                while True:
-                    pass
-                self.client.loop_stop()
+                self.client.loop_forever()
             else:
                 self.client.loop_start()
                 time.sleep(duration)
-                #tic = time.perf_counter()
-                #toc = time.perf_counter()
-                #while (toc-tic < duration):
-                #    pass
-                #self.client.loop_stop()
+                self.client.loop_stop()
             
         else:
             print("Error: not rx")
 
-    def get_message(self):
+    def getMessage(self):
         return self.message["messages"]
 
     def __addMessage(self, message_content):
             self.message["messages"].append(message_content)
 
-    def addText(self, text, reciever, sender):
+    def addText(self, text, receiver, sender):
         now = datetime.datetime.now()
         msg = {
             "message_type" : "text",
             "data" : text,
             "sender" : sender, 
-            "reciever" : reciever,
+            "receiver" : receiver,
             "time":{
 
                 "hour":now.hour,
@@ -139,23 +132,4 @@ class MQTTLink:
         self.client.disconnect()
 
 
-# defining for test script
-if __name__ == '__main__':
-
-    # Note: make sure you are reading values from a subscriber on the same board to see the result
-    # Start a client
-    mqtt_tx = MQTTLink("tx","ece180d/team8")
-
-    # Add data
-    mqtt_tx.addText("some text", "Jack", "John")
-    mqtt_tx.addWeather("sunny", 69, 75, 50)
-    mqtt_tx.addNews("https://www.youtube.com/watch?v=oHg5SJYRHA0", "important information")
     
-    # Send
-    mqtt_tx.send()
-
-    
-    # Test Rx
-    mqtt_rx = MQTTLink("rx", "ece180d/team8")
-    mqtt_rx.listen(20.0)
-    print(json.dumps(mqtt_rx.get_message()))
