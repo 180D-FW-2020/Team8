@@ -13,7 +13,7 @@ PATH = [
         '../img_implanter/mqtt_comms',
         '../envrd/audio',
         # '../envrd/gesture_detector',
-        # '../env_reader/image_tracking/hand_tracker'
+        '../env_reader/image_tracking/hand_tracker'
        ]
 
 import sys
@@ -37,7 +37,7 @@ import threading
 import message_placer as placer
 import mqtt_link as mqtt
 import audio
-# import hand_tracker
+import hand_tracker
 # import static_homography
 # import gest_classifier
 
@@ -92,6 +92,7 @@ class JobRunner(QRunnable):
         #     self.signals.done.emit()
 
 ## MQTT QObject Class #######################################################################################################
+## QObject connector for MQTT stuff
 class MQTTNetObject(QObject, mqtt.MQTTLink):
     new_message = pyqtSignal(str)
     def __init__(self, *args, parent=None, **kwargs):
@@ -105,18 +106,17 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
         self.addText(message, sender)
         self.send()
 
-class AudioObject(QObject):
+class AudioObject(QObject, audio.SpeechRecognizer):
     detected_phrase = pyqtSignal(str)
     transcribed_phrase = pyqtSignal(str)
     error = pyqtSignal()
-    def __init__(self, keyphrases : dict, parent=None):
-        super().__init__(parent)
-        self.recognizer = audio.SpeechRecognizer(keyphrases)
+    def __init__(self, keyphrases : dict, *args, parent=None, **kwargs):
+        super().__init__(parent, keyphrases=keyphrases)
 
     # @desc
     # emits a string containing the most recently transcribed phrase
     def sendCurrentPhrase(self):
-        s = self.recognizer.current_phrase
+        s = self.current_phrase
         if s != None:
             self.transcribed_phrase.emit(s)
             return
@@ -124,29 +124,42 @@ class AudioObject(QObject):
             time.sleep(1)
             self.sendCurrentPhrase()
 
-
-    # @desc
-    # waits for a keyphrase to be found, then returns the first detected phrase
-    def recordDetection(self):
-        end = False
+    def receivePhrase(self):
         try:
-            while(end == False):
-                for phrase, found in self.recognizer.phrases.items():
-                    if found == True:
-                        self.recognizer.resetDetection(phrase)
-                        self.detected_phrase.emit(phrase)
-                        # self.recognizer.teardown()
-                        # end = True
+            for phrase, found in self.phrases.items():
+                if found == True:
+                    self.resetDetection(phrase)
+                    self.detected_phrase.emit(phrase)
         except TypeError:
             pass
         except ValueError:
             pass
 
+
+    # @desc
+    # waits for a keyphrase to be found, then returns the first detected phrase
+    # def recordDetection(self):
+    #     end = False
+    #     try:
+    #         while(end == False):
+    #             for phrase, found in self.recognizer.phrases.items():
+    #                 if found == True:
+    #                     self.recognizer.resetDetection(phrase)
+    #                     self.detected_phrase.emit(phrase)
+    #                     # self.recognizer.teardown()
+    #                     # end = True
+    #     except TypeError:
+    #         pass
+    #     except ValueError:
+    #         pass
+
     def speechHandler(self):
         # self.timer.start(ATIMEOUT)
-        self.recognizer.listenForPhrases()
-        self.recordDetection()
+        self.listenForPhrases()
+        # self.recordDetection()
 
+## Message Board Class #######################################################################################################
+## takes in data from a general MQTT board and places it in UI, also takes in user input to send messages
 class MessageBoard(QWidget):
     board_image = pyqtSignal(np.ndarray)
     def __init__(self, username='xxxx', num_lines=5, parent=None):
@@ -177,7 +190,7 @@ class MessageBoard(QWidget):
         self.placer.updateUserBoard(self.user_message.values())
 
     def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message["message"], self.username["username"])
+        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
 
     def placeBoard(self, frame):
         frame = self.placer.placeBoard(frame)
@@ -185,7 +198,18 @@ class MessageBoard(QWidget):
 
     def receive(self):
         self.messenger.listen()
-    
+
+## Hand Tracker QObject Class #######################################################################################################
+## tracks hand in UI by placing box where it sees the hand
+class HandTracker(QObject):
+    hand_image = pyqtSignal(np.ndarray)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.tracker = hand_tracker.hand_tracker((160, 200, 255), (120, 100, 50), [0.5, 0.25, 0.25], debug=True) # values for upper_HSV, lower_HSV, can be changed
+
+    def findHand(self, frame):
+        frame, loc = self.tracker.locAdder(frame)
+        self.hand_image.emit(frame)
 # @desc
 # widget for handling a display from an opencv source
 class DisplayWidget(QWidget):
@@ -397,6 +421,7 @@ class MainWidget(QWidget):
         self.display = DisplayWidget()
         self.board = MessageBoard('default_username')
         self.start_button = QPushButton('START')
+        # self.tracker = HandTracker()
         # self.video = TestVideo()
         self.video = ThreadVideo()
         self.frame_timer = QTimer(self)
@@ -481,7 +506,9 @@ class MainWidget(QWidget):
         self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
-        self.board.board_image.connect(lambda x:self.display.setImage(x))
+        self.board.board_image.connect(lambda x: self.display.setImage(x))
+        # self.board.board_image.connect(lambda x:self.tracker.findHand(x))
+        # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
         self.start_button.clicked.connect(self._start_video)
@@ -518,7 +545,7 @@ class MainWidget(QWidget):
     def _print_phrases(self):
         while(1):
             time.sleep(1)
-            print(self.audio_recognizer.recognizer.phrases)
+            print(self.audio_recognizer.phrases)
 
     def calibrationStateHandler(self):
         self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
@@ -568,7 +595,7 @@ class MainWidget(QWidget):
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
-        self.audio_recognizer.recognizer.resetCurrentPhrase()
+        self.audio_recognizer.resetCurrentPhrase()
         self.__create_worker(self.audio_recognizer.sendCurrentPhrase())
 
     # NOTE: replace message slots with textwidget functions or smth if desired
@@ -620,8 +647,8 @@ class MainWidget(QWidget):
     # adds and removes keyphrases for audio recog's hotphrase list during a state's existence
     def _setStatePhrases(self, state, phrases):
         for phrase in phrases:
-            add_phrase = lambda val=phrase: self.audio_recognizer.recognizer.addKeyphrase(val)
-            rm_phrase = lambda val=phrase: self.audio_recognizer.recognizer.removeKeyphrase(val)
+            add_phrase = lambda val=phrase: self.audio_recognizer.addKeyphrase(val)
+            rm_phrase = lambda val=phrase: self.audio_recognizer.removeKeyphrase(val)
             state.entered.connect(add_phrase)
             state.exited.connect(rm_phrase)
 

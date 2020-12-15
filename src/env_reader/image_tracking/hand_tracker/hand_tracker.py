@@ -15,28 +15,24 @@ import numpy as np
 class hand_tracker:
 
     def __init__(self, upper_HSV, lower_HSV, filter_coeff =[],debug=False):
-        self.camera = cv.VideoCapture(0)
-        # error opening
-        if not (self.camera.isOpened()):
-            print("Could not open video device")
-
         self.upper_HSV = upper_HSV
         self.lower_HSV = lower_HSV
         self.locations = []
         for i in range(len(filter_coeff)):
             self.locations.append((0,0))
         self.filter_coefficients = filter_coeff
-        _,frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         self.debugging = debug
-
-    def __get_frame(self):
-        _, frame = self.camera.read()
-        self.last_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-        return
 
     def __color_mask(self, frame):
         return cv.inRange(frame, self.lower_HSV, self.upper_HSV)
+
+    def __fix_mask(self, frame, loc):
+        pixel = frame[loc]
+        print(pixel)
+        hsvRange = [20, 100, 100]
+        self.lower_HSV = np.array(np.maximum(pixel - hsvRange, [0, 0, 0]), dtype="uint8")
+        self.upper_HSV = np.array(np.minimum(pixel + hsvRange, [180, 200, 255]), dtype="uint8")
+
 
     def __blur(self, frame, blur_size = (2,2)):
         return cv.blur(frame, blur_size)
@@ -60,15 +56,15 @@ class hand_tracker:
             acc1 += data_point[1]*filter_coeffs[index]
         return (int(acc0),int(acc1))
 
-    def location(self):
-        self.__get_frame()
-        masked = self.__color_mask(self.last_frame)
+    def __location(self, frame):
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        masked = self.__color_mask(frame)
         blurred = self.__blur(masked)
         thresh = self.__bin_threshold(blurred)
-        cv.imshow('frame',self.last_frame)
-
-        cv.imshow('frame',masked)
-
+        
+        if self.debugging:
+            cv.imshow('mask', masked)
+        
         # getting contours
         _, contours, _= cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         if not contours:
@@ -95,13 +91,13 @@ class hand_tracker:
                 angle = np.arccos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c))  #      cosine theorem
                 
                 if self.debugging:
-                    cv.line(self.last_frame,start,end,[64,255,255],2)
-                    cv.circle(self.last_frame,far,5,[0,255,255],-1)
+                    cv.line(frame,start,end,[64,255,255],2)
+                    cv.circle(frame,far,5,[0,255,255],-1)
     
                 if angle <= 3*(np.pi) / 8:  # angle less than 90 degree, treat as fingers
                     cnt += 1
                     if self.debugging:
-                        cv.circle(self.last_frame, far, 4, [120, 255 , 255], -1)
+                        cv.circle(frame, far, 4, [120, 255 , 255], -1)
                     points.append( far)
             if cnt > 0:
                 cnt = cnt+1
@@ -120,22 +116,48 @@ class hand_tracker:
 
             
             if self.debugging:
-                cv.circle(self.last_frame, loc, 4, [0, 0 , 255], -1)
-                cv.putText(self.last_frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
+                cv.circle(frame, loc, 4, [0, 0 , 255], -1)
+                cv.putText(frame, str(cnt), (0, 50), cv.FONT_HERSHEY_SIMPLEX,1, (255, 0, 0) , 2, cv.LINE_AA)
+
+            # self.__fix_mask(hsv, pix_loc)
+
             return loc
+
+    def locAdder(self, frame):
+        loc = self.__location(frame)
+        return frame, loc
 
 if __name__ == '__main__':
     
+    cap = cv.VideoCapture(0)
+
+    ret, frame = cap.read()
+    frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+    pix_loc = frame.shape[0]//2, frame.shape[1]//2
+    pixel = np.array(frame[pix_loc])
+    # pixel = np.array([40, 100, 100])
+
+    # hsvRange = np.array([10, 50, 50])
+    # lower = np.array(np.maximum(pixel - hsvRange, [0, 0, 0]),dtype="uint8")
+    # upper = np.array(np.minimum(pixel + hsvRange, [180, 200, 255]), dtype="uint8")
+
+    lower = np.array([0, 30, 100], dtype="uint8")
+    upper = np.array([30, 200, 200], dtype="uint8")
+
     #general testing for dev
-    lower = np.array([0,48,80],dtype="uint8")
-    upper = np.array([20,255,255],dtype="uint8")
-    filter_coeff = np.array([0.5,0.25, 0.25])
+    filter_coeff = np.array([0.5, 0.25, 0.25])
     ht = hand_tracker(upper, lower, filter_coeff, True)
 
     while(True):
-        loc = ht.location()
+        ret, frame = cap.read()
+        frame, _ = ht.locAdder(frame)
+
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        pix_loc = frame.shape[0]//2, frame.shape[1]//2
+
+        print(hsv[pix_loc])
        # Display the resulting frame
-        cv.imshow('frame',cv.cvtColor(ht.last_frame,cv.COLOR_HSV2BGR))
+        cv.imshow('frame',frame)
 
         if cv.waitKey(1) & 0xFF == ord('q'):
              break
