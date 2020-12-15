@@ -168,29 +168,21 @@ class MessageBoard(QWidget):
         self.placer.updateChatBoard(new_message)
 
     def listenUserMessage(self):
-        self.user_message["state_phrase"] = "     Listening..."
+        self.user_message["state_phrase"] = "      Listening..."
         self.placer.updateUserBoard(self.user_message.values())
-
 
     def confirmUserMessage(self, message):
         self.user_message["message"] = message
         self.user_message["state_phrase"] = "      Send?"
         self.placer.updateUserBoard(self.user_message.values())
 
-
     def sendUserMessage(self):
         self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
         self.user_message["message"] =  ""
         self.user_message["state_phrase"] =  ""
 
-    def updateUserMessage(self, message):
-        self.user_message = message
-
-    def listenToUser(self):
-        self.user_message = "Listening..."
-
     def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message, self.username)
+        self.messenger.sendMessage(self.user_message["message"], self.username["username"])
 
     def placeBoard(self, frame):
         frame = self.placer.placeBoard(frame)
