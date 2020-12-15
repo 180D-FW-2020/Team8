@@ -34,7 +34,7 @@ class SpeechRecognizer:
         try:
             out = self.recog.recognize_sphinx(audio)
             # self.callback()
-            # print("Sphinx heard: " + out)
+            print("Sphinx heard: " + out)
             self.current_phrase = out
             for phrase in self.phrases:
                 if phrase in out:

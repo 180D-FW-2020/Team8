@@ -22,6 +22,10 @@ for lib in PATH:
     sys.path.append(lib)
 
 import time
+try:
+    import Queue
+except:
+    import queue as Queue
 # from os import path
 import cv2 as cv
 import numpy as np
@@ -56,10 +60,10 @@ ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 # dump all required signals here 
 # (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
 class JobSignals():
-
-    error = pyqtSignal(tuple) # redirect error reporting
-    output = pyqtSignal(object) # notify slot of function returned value
-    done = pyqtSignal() # notify main thread of completion
+    pass
+    # error = pyqtSignal(tuple) # redirect error reporting
+    # output = pyqtSignal(object) # notify slot of function returned value
+    # done = pyqtSignal() # notify main thread of completion
 
 # @desc
 # utility class for handling multithreading in Qt
@@ -78,13 +82,14 @@ class JobRunner(QRunnable):
         try:
             output = self.function(*self.args, **self.kwargs)
         except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-        else:
-            self.signals.output.emit(output)
-        finally:
-            self.signals.done.emit()
+            return
+            # traceback.print_exc()
+            # exctype, value = sys.exc_info()[:2]
+            # self.signals.error.emit((exctype, value, traceback.format_exc()))
+        # else:
+            # self.signals.output.emit(output)
+        # finally:
+        #     self.signals.done.emit()
 
 ## MQTT QObject Class #######################################################################################################
 class MQTTNetObject(QObject, mqtt.MQTTLink):
@@ -96,13 +101,14 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
         form_message = message['sender'] + ": " + message['data']
         self.new_message.emit(form_message)
         
-    def sendMessage(self, message, receiver, sender):
-        self.addText(message, receiver, sender)
+    def sendMessage(self, message, sender):
+        self.addText(message, sender)
         self.send()
 
 class AudioObject(QObject):
     detected_phrase = pyqtSignal(str)
     transcribed_phrase = pyqtSignal(str)
+    error = pyqtSignal()
     def __init__(self, keyphrases : dict, parent=None):
         super().__init__(parent)
         self.recognizer = audio.SpeechRecognizer(keyphrases)
@@ -113,8 +119,11 @@ class AudioObject(QObject):
         s = self.recognizer.current_phrase
         if s != None:
             self.transcribed_phrase.emit(s)
+            return
         else:
-            print("error: current phrase is null")
+            time.sleep(1)
+            self.sendCurrentPhrase()
+
 
     # @desc
     # waits for a keyphrase to be found, then returns the first detected phrase
@@ -123,11 +132,11 @@ class AudioObject(QObject):
         try:
             while(end == False):
                 for phrase, found in self.recognizer.phrases.items():
-                    if found:
+                    if found == True:
                         self.recognizer.resetDetection(phrase)
                         self.detected_phrase.emit(phrase)
                         # self.recognizer.teardown()
-                    # end = True
+                        # end = True
         except TypeError:
             pass
         except ValueError:
@@ -145,6 +154,7 @@ class MessageBoard(QWidget):
         # get an MQTT link
         self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
         self.placer = placer.MessagePlacer("br", num_messages)
+        self.user_message = ""
 
         # get a username
         self.username = 'dft_username'
@@ -159,15 +169,23 @@ class MessageBoard(QWidget):
     def __update_messages(self, new_message):
         # append messages so that the last message printed is at bottom
         self.messages.append(new_message)
-        print(self.messages)
 
         # cut it off at 5
         if len(self.messages) > self.num_messages:
             del self.messages[0]
 
+    def updateUserMessage(self, message):
+        self.user_message = message
+
+    def listenToUser(self):
+        self.user_message = "Listening..."
+
+    def sendUserMessage(self):
+        self.messenger.sendMessage(self.user_message, self.username)
+
     def placeBoard(self, frame):
         frame = self.placer.placeMessages(self.messages, frame)
-        frame = self.placer.placeUserMessage(self.username + ": ", frame)
+        frame = self.placer.placeUserMessage(self.user_message, frame)
         self.board_image.emit(frame)
 
     def receive(self):
@@ -234,8 +252,8 @@ class TestVideo(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cap = cv.VideoCapture(0)
-        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, DRESW)
-        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, DRESH)
+        # self.cap.set(cv.CAP_PROP_FRAME_WIDTH, DRESW)
+        # self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, DRESH)
         self.trigger = QBasicTimer()
 
     # @desc
@@ -248,12 +266,35 @@ class TestVideo(QObject):
     # handles timer events triggered by this class
     def timerEvent(self, event):
         if(event.timerId() != self.trigger.timerId()):
-            print("timer shit fucked up")
+            print("error: timer ID mismatch")
             return
             
         read, frame = self.cap.read()
         if read:
             self.image_data.emit(frame)
+
+# @ desc
+# threadbale video class for reading frames from camera capture.
+# places frames into 2-frame buffer queue, from which the main widget reads/emits to modules
+class ThreadVideo(QObject):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.cap = cv.VideoCapture(0)
+        # self.cap.set(cv.CAP_PROP_FRAME_WIDTH, DRESW)
+        # self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, DRESH)
+        # self.cap.set(cv.CAP_PROP_FPS, 30)
+        self.buffer = Queue.Queue()
+
+    def capture_frames(self):
+        while(1):
+            read, frame = self.cap.read()
+            if read:
+                if frame is not None and self.buffer.qsize() < 2:
+                    self.buffer.put(frame)
+                else:
+                    time.sleep(DINTERVAL/1000.0)
+            else:
+                print("unable to grab image") 
 
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
@@ -261,6 +302,9 @@ class TestVideo(QObject):
 class MainWidget(QWidget):
     yesSignal = pyqtSignal()
     noSignal = pyqtSignal()
+    msgEntry = pyqtSignal()
+    imgEntry = pyqtSignal()
+    frame_data = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -268,7 +312,9 @@ class MainWidget(QWidget):
         self.display = DisplayWidget()
         self.board = MessageBoard('default_username')
         self.start_button = QPushButton('START')
-        self.video = TestVideo()
+        # self.video = TestVideo()
+        self.video = ThreadVideo()
+        self.frame_timer = QTimer(self)
         self.audio_phrases = {}
         self.audio_recognizer = AudioObject(self.audio_phrases)
         self.layout = QVBoxLayout()
@@ -276,7 +322,6 @@ class MainWidget(QWidget):
 
         # state machine
         self.state_machine = QStateMachine()
-
 
         self.s_start = QState()
         
@@ -304,29 +349,60 @@ class MainWidget(QWidget):
 
         # state signals
         # TODO; need module objects to set up more signals/slots
-            
+        ## connections to main
+        self.s_main.entered.connect(self.__mqtt_thread)                                           # start mqtt when main window starts
+
+        ## connections to msg
+        self.s_msg_listen.entered.connect(self.board.listenToUser)
+        self.s_msg_send.entered.connect(self.board.sendUserMessage)
+
+        # put states into a dict and create IDs for them
+        states_and_IDs = {
+                            self.s_start : 0,
+                            self.s_cal: 10,
+                            self.s_cal_ht: 11,
+                            self.s_cal_wave: 12,
+                            self.s_cal_fin: 13,
+                            self.s_main: 20,
+                            self.s_img: 30,
+                            self.s_img_init: 31,
+                            self.s_img_find: 32,
+                            self.s_img_confirm: 33,
+                            self.s_img_display: 34,
+                            self.s_msg: 40,
+                            self.s_msg_init: 41,
+                            self.s_msg_listen: 42,
+                            self.s_msg_confirm: 43,
+                            self.s_msg_send: 44
+                        }
+        for state, sID in states_and_IDs.items():
+            self._print_current_state(state, sID)
+
         # signal creation for states with keyphrases
         states_with_phrases = {
-                                self.s_cal_ht : 'okay',
-                                self.s_img_init : 'place',
-                                self.s_img_display : 'next',
-                                self.s_img_confirm : 'yes',
-                                self.s_img_confirm : 'no',
-                                self.s_msg_init : 'message',
-                                self.s_msg_confirm : 'yes',
-                                self.s_msg_confirm : 'no'
+                                self.s_cal_ht : ['okay'],
+                                self.s_img_init : ['place'],
+                                self.s_img_display : ['next'],
+                                self.s_img_confirm : ['yes', 'no'],
+                                self.s_msg_init : ['message'],
+                                self.s_msg_confirm : ['yes', 'no']
                             }
-        for state, phrase in states_with_phrases.items():
-            self._setStatePhrase(state, phrase)
+        for state, phrases in states_with_phrases.items():
+            self._setStatePhrases(state, phrases)
 
-        self.s_start.addTransition(self.start_button.clicked, self.s_cal)
+        self.s_start.addTransition(self.start_button.clicked, self.s_main)
         self.calibrationStateHandler()
         self.messageStateHandler()
         self.imageStateHandler()
 
         # signals and slots
-        self.video.image_data.connect(lambda x: self.display.setImage(x))
-        self.start_button.clicked.connect(self.video.start)
+        # self.video.image_data.connect(lambda x: self.board.placeBoard(x)) # image_data is handed to the board first
+        self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
+        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.updateUserMessage(x)) # when a phrase is transcribed, board gets it
+        self.board.board_image.connect(lambda x:self.display.setImage(x))
+        # self.start_button.clicked.connect(self.video.start)
+        self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
+        self.start_button.clicked.connect(self._start_video)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
         self.audio_recognizer.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
 
@@ -340,25 +416,63 @@ class MainWidget(QWidget):
         # threading
         self.threadpool = QThreadPool()
 
+        # self.__create_worker(self._print_phrases)
+
+    def _start_video(self):
+        print("starting video...")
+        self.frame_timer.start(DINTERVAL)
+        self.__create_worker(self.video.capture_frames)
+
+    def _pass_image(self, imqueue):
+        if not imqueue.empty():
+            img = imqueue.get()
+            if img is not None and len(img) > 0:
+                # print("emitting frame")
+                self.frame_data.emit(img)
+
+    def _print_current_state(self, state, sID):
+        state.entered.connect(lambda: print("current state: " + str(sID)))
+
+    def _print_phrases(self):
+        while(1):
+            time.sleep(1)
+            print(self.audio_recognizer.recognizer.phrases)
+
     def calibrationStateHandler(self):
-        self.s_cal.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
+        self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
         # self.s_cal_ht.addTransition(SOMESIG, self.s_cal_wave)
         # self.s_cal_wave.addTransition(SOMESIG, self.s_cal_fin)
         self.s_cal.addTransition(self.s_cal.finished, self.s_main)
 
     def messageStateHandler(self):
-        self.s_msg_init.addTransition(self.audio_recognizer.detected_phrase, self.s_msg_listen)
+        # transition when message is heard
+        msg_init_handler = lambda x: self.initSlot(x)
+        self._phraseOptionHandler(self.s_msg_init, msg_init_handler)
+        self.s_msg_init.addTransition(self.msgEntry, self.s_msg_listen)
+
+        # when state is entered, listen for 5 seconds
         self.s_msg_listen.entered.connect(self.messageListenSlot)
+        
+        # then, at end fo 5 seconds, transition to confirming the message
         self.s_msg_listen.addTransition(self.audio_recognizer.transcribed_phrase, self.s_msg_confirm)
         # self.s_msg_confirm.entered.connect('''ask user to confirm, and print transcribed phrase''')
+
         msg_confirm_handler = lambda x: self.confirmSlot(x)
         self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)
+
+        # transition to sending message if message is confirmed
         self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
+
+        # transition back to listening if user doesn't like message
         self.s_msg_confirm.addTransition(self.noSignal, self.s_msg_listen)
         # self.s_msg_send.addTransition(someMQTTsignal, self.s_msg_init)
 
+        # TODO: add transition from s_msg_send to s_msg_init
+
     def imageStateHandler(self):
-        self.s_img_init.addTransition(self.audio_recognizer.detected_phrase, self.s_img_find)
+        img_init_handler = lambda x: self.initSlot(x)
+        self._phraseOptionHandler(self.s_img_init, img_init_handler)
+        self.s_img_init.addTransition(self.imgEntry, self.s_img_find)
         # self.s_img_find.addTransition(someFlatSurfacesignal, self.s_img_confirm)
         img_confirm_handler = lambda x: self.confirmSlot(x)
         self._phraseOptionHandler(self.s_img_confirm, img_confirm_handler)
@@ -369,11 +483,11 @@ class MainWidget(QWidget):
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
         self.audio_recognizer.recognizer.resetCurrentPhrase()
-        time.sleep(5)
-        self.audio_recognizer.sendCurrentPhrase()
+        self.__create_worker(self.audio_recognizer.sendCurrentPhrase())
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def confirmSlot(self, ans):
+        # print("entered confirm slot")
         if ans == 'yes':
             self.yesSignal.emit()
         elif ans == 'no':
@@ -381,18 +495,23 @@ class MainWidget(QWidget):
         else:
             print("error: received phrase is not `yes` nor `no`")
 
+    def initSlot(self, ans):
+        if ans == 'message':
+            self.msgEntry.emit()
+        elif ans == 'place':
+            self.imgEntry.emit()
+
     def setMainLayout(self):
         self.layout.addWidget(self.display)
         self.layout.addWidget(self.start_button)
         self.setLayout(self.layout)
 
-        self.threadpool = QThreadPool()
-
-        self.__create_worker(self.board.receive)
-
     def __create_worker(self, func):
         worker = JobRunner(func)
         self.threadpool.start(worker)
+
+    def __mqtt_thread(self):
+        self.__create_worker(self.board.receive)
 
     def deleteWidget(self, widget):
         self.layout.removeWidget(widget)
@@ -403,24 +522,22 @@ class MainWidget(QWidget):
     # takes a state and a handler function for any detected phrase for that state.
     # sets up and tears down connection to the handler during the state's existence
     def _phraseOptionHandler(self, state, handler):
-        h = handler
-        confirm_handle = lambda: self.audio_recognizer.detected_phrase.connect(h)
+        # when a new state is entered, connect the detect_phrase signal in the audio recognizer to the handler
+        confirm_handle = lambda: self.audio_recognizer.detected_phrase.connect(handler)
         state.entered.connect(confirm_handle)
-        confirm_teardown = lambda: self.audio_recognizer.detected_phrase.disconnect(h)
+
+        # when that state is exited, this is removed
+        confirm_teardown = lambda: self.audio_recognizer.detected_phrase.disconnect(handler)
         state.exited.connect(confirm_teardown)
 
     # @desc
     # adds and removes keyphrases for audio recog's hotphrase list during a state's existence
-    def _setStatePhrase(self, state, phrase):
-        add_phrase = lambda: self.audio_recognizer.recognizer.addKeyphrase(phrase)
-        rm_phrase = lambda: self.audio_recognizer.recognizer.removeKeyphrase(phrase)
-        state.entered.connect(add_phrase)
-        state.exited.connect(rm_phrase)
-
-    def __create_worker(self, func):
-        worker = JobRunner(func)
-        self.threadpool.start(worker)
-
+    def _setStatePhrases(self, state, phrases):
+        for phrase in phrases:
+            add_phrase = lambda val=phrase: self.audio_recognizer.recognizer.addKeyphrase(val)
+            rm_phrase = lambda val=phrase: self.audio_recognizer.recognizer.removeKeyphrase(val)
+            state.entered.connect(add_phrase)
+            state.exited.connect(rm_phrase)
 
 # @desc
 # initializes all UI widgets
