@@ -105,18 +105,17 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
         self.addText(message, sender)
         self.send()
 
-class AudioObject(QObject):
+class AudioObject(QObject, audio.SpeechRecognizer):
     detected_phrase = pyqtSignal(str)
     transcribed_phrase = pyqtSignal(str)
     error = pyqtSignal()
-    def __init__(self, keyphrases : dict, parent=None):
-        super().__init__(parent)
-        self.recognizer = audio.SpeechRecognizer(keyphrases)
+    def __init__(self, keyphrases : dict, *args, parent=None, **kwargs):
+        super().__init__(parent, keyphrases=keyphrases)
 
     # @desc
     # emits a string containing the most recently transcribed phrase
     def sendCurrentPhrase(self):
-        s = self.recognizer.current_phrase
+        s = self.current_phrase
         if s != None:
             self.transcribed_phrase.emit(s)
             return
@@ -124,28 +123,39 @@ class AudioObject(QObject):
             time.sleep(1)
             self.sendCurrentPhrase()
 
-
-    # @desc
-    # waits for a keyphrase to be found, then returns the first detected phrase
-    def recordDetection(self):
-        end = False
+    def receivePhrase(self):
         try:
-            while(end == False):
-                for phrase, found in self.recognizer.phrases.items():
-                    if found == True:
-                        self.recognizer.resetDetection(phrase)
-                        self.detected_phrase.emit(phrase)
-                        # self.recognizer.teardown()
-                        # end = True
+            for phrase, found in self.phrases.items():
+                if found == True:
+                    self.resetDetection(phrase)
+                    self.detected_phrase.emit(phrase)
         except TypeError:
             pass
         except ValueError:
             pass
 
+
+    # @desc
+    # waits for a keyphrase to be found, then returns the first detected phrase
+    # def recordDetection(self):
+    #     end = False
+    #     try:
+    #         while(end == False):
+    #             for phrase, found in self.recognizer.phrases.items():
+    #                 if found == True:
+    #                     self.recognizer.resetDetection(phrase)
+    #                     self.detected_phrase.emit(phrase)
+    #                     # self.recognizer.teardown()
+    #                     # end = True
+    #     except TypeError:
+    #         pass
+    #     except ValueError:
+    #         pass
+
     def speechHandler(self):
         # self.timer.start(ATIMEOUT)
-        self.recognizer.listenForPhrases()
-        self.recordDetection()
+        self.listenForPhrases()
+        # self.recordDetection()
 
 class MessageBoard(QWidget):
     board_image = pyqtSignal(np.ndarray)
@@ -177,7 +187,7 @@ class MessageBoard(QWidget):
         self.placer.updateUserBoard(self.user_message.values())
 
     def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message["message"], self.username["username"])
+        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
 
     def placeBoard(self, frame):
         frame = self.placer.placeBoard(frame)
