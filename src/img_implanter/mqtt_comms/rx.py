@@ -1,4 +1,3 @@
-import json
 import mqtt_link as mqtt
 
 # defining for test script

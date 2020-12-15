@@ -205,7 +205,7 @@ class HandTracker(QObject):
     hand_image = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.tracker = hand_tracker.hand_tracker((160, 200, 255), (120, 100, 50), [0.5, 0.25, 0.25], debug=True) # values for upper_HSV, lower_HSV, can be changed
+        self.tracker = hand_tracker.hand_tracker((160, 200, 200), (120, 100, 50), [0.5, 0.25, 0.25], debug=True) # values for upper_HSV, lower_HSV, can be changed
 
     def findHand(self, frame):
         frame, loc = self.tracker.locAdder(frame)
@@ -421,7 +421,7 @@ class MainWidget(QWidget):
         self.display = DisplayWidget()
         self.board = MessageBoard('default_username')
         self.start_button = QPushButton('START')
-        # self.tracker = HandTracker()
+        self.tracker = HandTracker()
         # self.video = TestVideo()
         self.video = ThreadVideo()
         self.frame_timer = QTimer(self)
@@ -506,9 +506,9 @@ class MainWidget(QWidget):
         self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
-        self.board.board_image.connect(lambda x: self.display.setImage(x))
-        # self.board.board_image.connect(lambda x:self.tracker.findHand(x))
-        # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
+        # self.board.board_image.connect(lambda x: self.display.setImage(x))
+        self.board.board_image.connect(lambda x:self.tracker.findHand(x))
+        self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
         self.start_button.clicked.connect(self._start_video)
