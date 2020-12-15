@@ -156,96 +156,6 @@ class DisplayWidget(QWidget):
         p.drawImage(0, 0, self.image)
         self.image = QImage()
 
-"""
-# Using multithreaded workers
-class ImageOverlayCarousel(QObject):
-    image_data = pyqtSignal(np.ndarray)
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.cap = cv.VideoCapture(0)                       # get input frames instead
-        self.model = cv.imread('model.png')
-        self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
-        self.trigger = QBasicTimer()
-        self.counter = 0
-        self.index = 0
-
-    # @desc
-    # event trigger for an instantaneous event; use when an event overload is not desired
-    # or when an event trigger must cause a custom signal to emit
-    def start(self):
-        self.trigger.start(0, self)
-
-    def next(self):
-        if self.index != len(self.overlay) - 1:
-            self.index += 1
-        else:
-            self.index = 0
-
-    # run video embedder
-    def run(self):
-        overlayimage = self.overlay[self.index]
-        retval, cameraimage = self.cap.read()
-        height, width, c = self.model.shape
-
-        orb = cv.ORB_create(nfeatures=1000)
-        kp1, des1 = orb.detectAndCompute(self.model, None)           
-        overlayimage = cv.resize(overlayimage, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = cameraimage.copy()
-
-        kp2, des2 = orb.detectAndCompute(cameraimage, None)
-        matches = self.generateMatches(des1, des2)
-        print(len(matches))
-
-        if len(matches) > 235:
-            augmentedimage = self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)
-        return augmentedimage
-
-    # generates matches between two image descriptors
-    # @param
-    # des1: model image descriptors
-    # des2: camera image descriptors
-    def generateMatches(self, des1, des2):
-        bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
-        matches = bf.match(des1, des2)
-        matches = sorted(matches, key=lambda x: x.distance)
-        return matches
-
-    # does video embed in camera image
-    # @param
-    # cameraimage: cap.read() camera image
-    # overlayimage: overlay image
-    # kp1: model keypoints
-    # kp2: camera image keypoints
-    # matches: BFMatcher between model and camera image descriptors
-    # augmentedimage: camera feed with video overlay
-    # height: height of mask
-    # width: width of mask
-    def embed(self, cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width):
-        srcpts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-        dstpts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
-        matrix, mask = cv.findHomography(srcpts, dstpts, cv.RANSAC, 5)
-
-        points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
-        dst = cv.perspectiveTransform(points, matrix)
-        
-        warpedimage = cv.warpPerspective(overlayimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
-
-        newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
-        cv.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))
-        invertedmask = cv.bitwise_not(newmask)
-        augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
-        augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
-        return augmentedimage
-
-    # @desc
-    # handles timer events triggered by this class
-    def timerEvent(self, event):
-        if(event.timerId() != self.trigger.timerId()):
-            print("timer shit fucked up")
-            return
-
-        self.image_data.emit(cameraimage)
-"""
 
 # @desc
 # test class for opencv video feed -> replace with any np array
@@ -326,7 +236,7 @@ class ImageOverlayCarousel(QObject):
         matches = self.generateMatches(des1, des2)
         print(len(matches))
 
-        if len(matches) > 230:
+        if len(matches) > 200:
             return self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)
         return cameraimage
 
