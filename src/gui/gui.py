@@ -128,9 +128,12 @@ class AudioObject(QObject):
     # @desc
     # waits for a keyphrase to be found, then returns the first detected phrase
     def recordDetection(self):
-        end = False
+        # start_time = time.time()
         try:
             while(end == False):
+                # curr_time = time.time() - start_time
+                # if curr_time%2 == 0:
+                #     print("inside detection loop")
                 for phrase, found in self.recognizer.phrases.items():
                     if found == True:
                         self.recognizer.resetDetection(phrase)
