@@ -149,30 +149,40 @@ class AudioObject(QObject):
 
 class MessageBoard(QWidget):
     board_image = pyqtSignal(np.ndarray)
-    def __init__(self, username, num_messages=5, parent=None):
+    def __init__(self, username='xxxx', num_lines=5, parent=None):
         super().__init__(parent)
         # get an MQTT link
         self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
-        self.placer = placer.MessagePlacer("br", num_messages)
-        self.user_message = ""
-
-        # get a username
-        self.username = 'dft_username'
+        self.board_shape = (200, 200)
+        self.placer = placer.BoardPlacer(self.board_shape, "br", num_lines)
 
         # set up message reading
-        self.num_messages = num_messages
-        self.messages = []
+        self.num_lines = num_lines
+        self.user_message = {"username":username, "message":"", "state_phrase":""}
 
         # update message list upon new message
         self.messenger.new_message.connect(lambda message: self.__update_messages(message))
 
     def __update_messages(self, new_message):
         # append messages so that the last message printed is at bottom
-        self.messages.append(new_message)
+        self.placer.updateChatBoard(new_message)
 
-        # cut it off at 5
-        if len(self.messages) > self.num_messages:
-            del self.messages[0]
+    def listenUserMessage(self):
+        self.user_message["state_phrase"] = "      Listening..."
+        self.placer.updateUserBoard(self.user_message.values())
+
+    def confirmUserMessage(self, message):
+        self.user_message["message"] = message
+        self.user_message["state_phrase"] = "      Send?"
+        self.placer.updateUserBoard(self.user_message.values())
+
+    def sendUserMessage(self):
+        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
+        self.user_message["message"] =  ""
+        self.user_message["state_phrase"] =  ""
+
+    def sendUserMessage(self):
+        self.messenger.sendMessage(self.user_message["message"], self.username["username"])
 
     def updateUserMessage(self, message):
         self.user_message = message
@@ -184,8 +194,7 @@ class MessageBoard(QWidget):
         self.messenger.sendMessage(self.user_message, self.username)
 
     def placeBoard(self, frame):
-        frame = self.placer.placeMessages(self.messages, frame)
-        frame = self.placer.placeUserMessage(self.user_message, frame)
+        frame = self.placer.placeBoard(frame)
         self.board_image.emit(frame)
 
     def receive(self):
@@ -442,10 +451,6 @@ class MainWidget(QWidget):
         ## connections to main
         self.s_main.entered.connect(self.__mqtt_thread)                                           # start mqtt when main window starts
 
-        ## connections to msg
-        self.s_msg_listen.entered.connect(self.board.listenToUser)
-        self.s_msg_send.entered.connect(self.board.sendUserMessage)
-
         # put states into a dict and create IDs for them
         states_and_IDs = {
                             self.s_start : 0,
@@ -488,7 +493,8 @@ class MainWidget(QWidget):
         # signals and slots
         # self.video.image_data.connect(lambda x: self.board.placeBoard(x)) # image_data is handed to the board first
         self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
-        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.updateUserMessage(x)) # when a phrase is transcribed, board gets it
+        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
+
         self.board.board_image.connect(lambda x:self.display.setImage(x))
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
@@ -545,13 +551,17 @@ class MainWidget(QWidget):
         
         # then, at end fo 5 seconds, transition to confirming the message
         self.s_msg_listen.addTransition(self.audio_recognizer.transcribed_phrase, self.s_msg_confirm)
-        # self.s_msg_confirm.entered.connect('''ask user to confirm, and print transcribed phrase''')
+        self.s_msg_listen.entered.connect(self.board.listenUserMessage)
 
         msg_confirm_handler = lambda x: self.confirmSlot(x)
-        self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)
+        self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)      ## connections to msg
 
         # transition to sending message if message is confirmed
         self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
+
+        # send back to init state
+        self.s_msg_send.entered.connect(self.board.sendUserMessage)
+        self.s_msg_send.addTransition(self.s_msg_send.entered, self.s_msg_init)
 
         # transition back to listening if user doesn't like message
         self.s_msg_confirm.addTransition(self.noSignal, self.s_msg_listen)
