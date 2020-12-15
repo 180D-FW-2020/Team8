@@ -25,6 +25,7 @@ import datetime
 import os
 
 from imu_integration.pub import PUBLISHER
+from mqtt_link import mqtt
 
 
 RAD_TO_DEG = 57.29578
@@ -82,12 +83,17 @@ KFangleX = 0.0
 KFangleY = 0.0
 
 def handleIMU(action):
+    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/imu")
+    mqtt_test.addText(action, "Siri")
+    mqtt_test.send()
+    """
     publisher = PUBLISHER("ece180d/MEAT/imu", action)
     client = publisher.connect()
     client.loop_start()
     publisher.send(client)
     client.loop_stop()
     client.disconnect()
+    """
 
 
 def kalmanFilterY ( accAngle, gyroRate, DT):
