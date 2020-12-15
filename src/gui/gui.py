@@ -156,7 +156,6 @@ class MessageBoard(QWidget):
         self.board_shape = (200, 200)
         self.placer = placer.BoardPlacer(self.board_shape, "br", num_lines)
 
-
         # set up message reading
         self.num_lines = num_lines
         self.user_message = {"username":username, "message":"", "state_phrase":""}
@@ -172,6 +171,7 @@ class MessageBoard(QWidget):
         self.user_message["state_phrase"] = "      Listening..."
         self.placer.updateUserBoard(self.user_message.values())
 
+
     def confirmUserMessage(self, message):
         self.user_message["message"] = message
         self.user_message["state_phrase"] = "      Send?"
@@ -182,6 +182,15 @@ class MessageBoard(QWidget):
         self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
         self.user_message["message"] =  ""
         self.user_message["state_phrase"] =  ""
+
+    def updateUserMessage(self, message):
+        self.user_message = message
+
+    def listenToUser(self):
+        self.user_message = "Listening..."
+
+    def sendUserMessage(self):
+        self.messenger.sendMessage(self.user_message, self.username)
 
     def placeBoard(self, frame):
         frame = self.placer.placeBoard(frame)
@@ -351,8 +360,6 @@ class MainWidget(QWidget):
         ## connections to main
         self.s_main.entered.connect(self.__mqtt_thread)                                           # start mqtt when main window starts
 
-        
-
         # put states into a dict and create IDs for them
         states_and_IDs = {
                             self.s_start : 0,
@@ -396,6 +403,7 @@ class MainWidget(QWidget):
         # self.video.image_data.connect(lambda x: self.board.placeBoard(x)) # image_data is handed to the board first
         self.frame_data.connect(lambda x: self.board.placeBoard(x)) 
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
+
         self.board.board_image.connect(lambda x:self.display.setImage(x))
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
@@ -457,10 +465,11 @@ class MainWidget(QWidget):
         msg_confirm_handler = lambda x: self.confirmSlot(x)
         self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)      ## connections to msg
 
+
         # transition to sending message if message is confirmed
         self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
 
-        # leave when entered
+        # send back to init state
         self.s_msg_send.entered.connect(self.board.sendUserMessage)
         self.s_msg_send.addTransition(self.s_msg_send.entered, self.s_msg_init)
 
@@ -488,7 +497,7 @@ class MainWidget(QWidget):
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def confirmSlot(self, ans):
-        print("entered confirm slot")
+        # print("entered confirm slot")
         if ans == 'yes':
             self.yesSignal.emit()
         elif ans == 'no':
