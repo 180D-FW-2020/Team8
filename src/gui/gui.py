@@ -177,11 +177,6 @@ class MessageBoard(QWidget):
         self.placer.updateUserBoard(self.user_message.values())
 
     def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
-        self.user_message["message"] =  ""
-        self.user_message["state_phrase"] =  ""
-
-    def sendUserMessage(self):
         self.messenger.sendMessage(self.user_message["message"], self.username["username"])
 
     def placeBoard(self, frame):
@@ -295,6 +290,96 @@ class ThreadVideo(QObject):
                     time.sleep(DINTERVAL/1000.0)
             else:
                 print("unable to grab image") 
+
+# @desc
+# class for opencv image carousel using ar overlay
+class ImageOverlayCarousel(QObject):
+    out_image = pyqtSignal(np.ndarray)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.model = cv.imread('model2.png')
+        self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
+        self.trigger = QBasicTimer()
+        self.counter = 0
+        self.index = 0
+
+    # @desc
+    # event trigger for an instantaneous event; use when an event overload is not desired
+    # or when an event trigger must cause a custom signal to emit
+    def start(self):
+        self.trigger.start(0, self)
+
+    def next(self):
+        if self.index != len(self.overlay) - 1:
+            self.index += 1
+        else:
+            self.index = 0
+
+    # run video embedder
+    def run(self, cameraimage):
+        overlayimage = self.overlay[self.index]
+        height, width, c = self.model.shape
+
+        orb = cv.ORB_create(nfeatures=1000)
+        kp1, des1 = orb.detectAndCompute(self.model, None) 
+
+        overlayimage = cv.resize(overlayimage, (width, height))  # resize image to fit model image dimensions
+        augmentedimage = cameraimage.copy()
+
+        kp2, des2 = orb.detectAndCompute(cameraimage, None)
+        matches = self.generateMatches(des1, des2)
+        print(len(matches))
+
+        if len(matches) > 200:
+            return self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)
+        return cameraimage
+
+    # generates matches between two image descriptors
+    # @param
+    # des1: model image descriptors
+    # des2: camera image descriptors
+    def generateMatches(self, des1, des2):
+        bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+        matches = bf.match(des1, des2)
+        matches = sorted(matches, key=lambda x: x.distance)
+        return matches
+
+    # does video embed in camera image
+    # @param
+    # cameraimage: cap.read() camera image
+    # overlayimage: overlay image
+    # kp1: model keypoints
+    # kp2: camera image keypoints
+    # matches: BFMatcher between model and camera image descriptors
+    # augmentedimage: camera feed with video overlay
+    # height: height of mask
+    # width: width of mask
+    def embed(self, cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width):
+        srcpts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+        dstpts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+        matrix, mask = cv.findHomography(srcpts, dstpts, cv.RANSAC, 5)
+
+        points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
+        dst = cv.perspectiveTransform(points, matrix)
+        
+        warpedimage = cv.warpPerspective(overlayimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
+
+        newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
+        cv.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))
+        invertedmask = cv.bitwise_not(newmask)
+        augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
+        augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
+        return augmentedimage
+
+    # @desc
+    # handles timer events triggered by this class
+    def timerEvent(self, event):
+        if(event.timerId() != self.trigger.timerId()):
+            print("timer shit fucked up")
+            return
+
+        augmentedimage = self.run()
+        self.out_image.emit(augmentedimage)
 
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
@@ -456,7 +541,6 @@ class MainWidget(QWidget):
 
         msg_confirm_handler = lambda x: self.confirmSlot(x)
         self._phraseOptionHandler(self.s_msg_confirm, msg_confirm_handler)      ## connections to msg
-
 
         # transition to sending message if message is confirmed
         self.s_msg_confirm.addTransition(self.yesSignal, self.s_msg_send)
