@@ -543,8 +543,9 @@ class MainWidget(QWidget):
 
         # self.text_board.board_image.connect(lambda x: self.display.setImage(x))
         self.text_board.board_image.connect(lambda x:self.imu_board.placeBoard(x))
-        self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
-        self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
+        self.imu_board.board_image.connect(lambda x: self.display.setImage(x))
+        # self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
+        # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
 
         # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
