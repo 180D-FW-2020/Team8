@@ -8,7 +8,7 @@ if __name__ == '__main__':
     mqtt_tx = mqtt.MQTTLink("ece180d/MEAT/general")
 
     # Add data
-    mqtt_tx.addText("some text", "Jack")
+    mqtt_tx.addText("very cool messaging Nate!", "user_2")
     
     # Send
     mqtt_tx.send()

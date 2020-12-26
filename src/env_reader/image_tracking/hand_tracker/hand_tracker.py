@@ -175,36 +175,6 @@ if __name__ == '__main__':
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         pix_loc = frame.shape[0]//2, frame.shape[1]//2
 
-        hsv_planes = cv.split(frame)
-        h_histSize = 90
-        sv_histSize = 128
-        h_histRange = (0, 180)
-        sv_histRange = (0, 256) # the upper boundary is exclusive
-        accumulate = False
-        h_hist = cv.calcHist(hsv_planes, [0], None, [histSize], histRange, accumulate=accumulate)
-        s_hist = cv.calcHist(hsv_planes, [1], None, [histSize], histRange, accumulate=accumulate)
-        v_hist = cv.calcHist(hsv_planes, [2], None, [histSize], histRange, accumulate=accumulate)
-        hist_w = 512
-        hist_h = 400
-        bin_w = int(round( hist_w/histSize ))
-        histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
-        cv.normalize(h_hist, h_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
-        cv.normalize(s_hist, s_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
-        cv.normalize(v_hist, v_hist, alpha=0, beta=hist_h, norm_type=cv.NORM_MINMAX)
-
-        for i in range(1, histSize):
-            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(h_hist[i-1])) ),
-                    ( bin_w*(i), hist_h - int(np.round_(h_hist[i])) ),
-                    ( 255, 0, 0), thickness=2)
-            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(s_hist[i-1])) ),
-                    ( bin_w*(i), hist_h - int(np.round_(s_hist[i])) ),
-                    ( 0, 255, 0), thickness=2)
-            cv.line(histImage, ( bin_w*(i-1), hist_h - int(np.round_(v_hist[i-1])) ),
-                    ( bin_w*(i), hist_h - int(np.round_(v_hist[i])) ),
-                    ( 0, 0, 255), thickness=2)
-
-        cv.imshow('histogram', histImage)
-
         # print(hsv[pix_loc])
         # Display the resulting frame
         cv.imshow('frame',frame)
