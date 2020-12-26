@@ -10,8 +10,10 @@ PATH = [
         # '../training/classifier_training',
         # '../video_embedder',
         # '../static_ar_exploration',
-        '../img_implanter/mqtt_comms',
-        '../envrd/audio',
+        '../comms/mqtt',
+        '../envrd',
+        '../imgproc',
+        '../../data/gui'
         # '../envrd/gesture_detector',
         # '../env_reader/image_tracking/hand_tracker'
        ]
@@ -307,8 +309,8 @@ class ImageOverlayCarousel(QObject):
     out_image = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.model = cv.imread('model_qr.png')
-        self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
+        self.model = cv.imread('../../data/gui/model_qr.png')
+        self.overlay = [cv.imread('../../data/gui/sample1.jpg'), cv.imread('../../data/gui/sample2.jpg')]
         # self.trigger = QBasicTimer()
         self.counter = 0
         self.index = 0
