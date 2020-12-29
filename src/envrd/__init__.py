@@ -1,2 +1,2 @@
-from . import audio
-from . import objdet
+# initialize envrd submodule
+
