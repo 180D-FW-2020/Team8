@@ -13,7 +13,7 @@ PATH = [
         '../comms/mqtt',
         '../envrd',
         '../imgproc',
-        '../../data/gui'
+        '../../data/gui',
         # '../envrd/gesture_detector',
         '../env_reader/image_tracking/hand_tracker'
        ]
@@ -37,9 +37,11 @@ from PyQt5.QtWidgets import *
 import threading
 # import IMU
 import message_placer as placer
-import mqtt_link as mqtt
-import audio
-import hand_tracker
+# import mqtt_link as mqtt
+import mqtt_imp as mqtt
+# import audio 
+import audio_imp as audio
+from hand_tracker import hand_tracker
 # import static_homography
 # import gest_classifier
 
@@ -59,15 +61,6 @@ ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 ###################################################################
 
 # @desc
-# dump all required signals here 
-# (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
-class JobSignals():
-    pass
-    # error = pyqtSignal(tuple) # redirect error reporting
-    # output = pyqtSignal(object) # notify slot of function returned value
-    # done = pyqtSignal() # notify main thread of completion
-
-# @desc
 # utility class for handling multithreading in Qt
 # all heavy event-triggered ops should be called through this class
 class JobRunner(QRunnable):
@@ -77,7 +70,7 @@ class JobRunner(QRunnable):
         self.function = function
         self.args = args
         self.kwargs = kwargs
-        self.signals = JobSignals()
+        # self.signals = JobSignals()
 
     @pyqtSlot()
     def run(self):
@@ -95,114 +88,62 @@ class JobRunner(QRunnable):
 
 ## MQTT QObject Class #######################################################################################################
 ## QObject connector for MQTT stuff
-class MQTTNetObject(QObject, mqtt.MQTTLink):
-    new_message = pyqtSignal(str)
-    def __init__(self, *args, parent=None, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+# class MQTTNetObject(QObject, mqtt.MQTTLink):
+#     new_message = pyqtSignal(str)
+#     def __init__(self, *args, parent=None, **kwargs):
+#         super().__init__(parent, *args, **kwargs)
 
-    def receiveMessage(self, message):
-        form_message = message['sender'] + ": " + message['data']
-        self.new_message.emit(form_message)
+#     def receiveMessage(self, message):
+#         form_message = message['sender'] + ": " + message['data']
+#         self.new_message.emit(form_message)
         
-    def sendMessage(self, message, sender):
-        self.addText(message, sender)
-        self.send()
-
-class AudioObject(QObject, audio.SpeechRecognizer):
-    detected_phrase = pyqtSignal(str)
-    transcribed_phrase = pyqtSignal(str)
-    error = pyqtSignal()
-    def __init__(self, keyphrases : dict, *args, parent=None, **kwargs):
-        super().__init__(parent, keyphrases=keyphrases)
-
-    # @desc
-    # emits a string containing the most recently transcribed phrase
-    def sendCurrentPhrase(self):
-        s = self.current_phrase
-        if s != None:
-            self.transcribed_phrase.emit(s)
-            return
-        else:
-            time.sleep(1)
-            self.sendCurrentPhrase()
-
-    def receivePhrase(self):
-        try:
-            for phrase, found in self.phrases.items():
-                if found == True:
-                    self.resetDetection(phrase)
-                    self.detected_phrase.emit(phrase)
-        except TypeError:
-            pass
-        except ValueError:
-            pass
-
-
-    # @desc
-    # waits for a keyphrase to be found, then returns the first detected phrase
-    # def recordDetection(self):
-    #     end = False
-    #     try:
-    #         while(end == False):
-    #             for phrase, found in self.recognizer.phrases.items():
-    #                 if found == True:
-    #                     self.recognizer.resetDetection(phrase)
-    #                     self.detected_phrase.emit(phrase)
-    #                     # self.recognizer.teardown()
-    #                     # end = True
-    #     except TypeError:
-    #         pass
-    #     except ValueError:
-    #         pass
-
-    def speechHandler(self):
-        # self.timer.start(ATIMEOUT)
-        self.listenForPhrases()
-        # self.recordDetection()
+#     def sendMessage(self, message, sender):
+#         self.addText(message, sender)
+#         self.send()
 
 ## Message Board Class #######################################################################################################
 ## takes in data from a general MQTT board and places it in UI, also takes in user input to send messages
-class MessageBoard(QWidget):
-    board_image = pyqtSignal(np.ndarray)
-    def __init__(self, username='xxxx', num_lines=5, parent=None):
-        super().__init__(parent)
-        # get an MQTT link
-        self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
-        self.board_shape = (200, 200)
-        self.placer = placer.BoardPlacer(self.board_shape, "br", num_lines)
+# class MessageBoard(QWidget):
+#     board_image = pyqtSignal(np.ndarray)
+#     def __init__(self, username='xxxx', num_lines=5, parent=None):
+#         super().__init__(parent)
+#         # get an MQTT link
+#         self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
+#         self.board_shape = (200, 200)
+#         self.placer = placer.BoardPlacer(self.board_shape, "br", num_lines)
 
-        # set up message reading
-        self.num_lines = num_lines
-        self.user_message = {"username":username, "message":"", "state_phrase":""}
+#         # set up message reading
+#         self.num_lines = num_lines
+#         self.user_message = {"username":username, "message":"", "state_phrase":""}
 
-        # update message list upon new message
-        self.messenger.new_message.connect(lambda message: self.__update_messages(message))
+#         # update message list upon new message
+#         self.messenger.new_message.connect(lambda message: self.__update_messages(message))
 
-    def __update_messages(self, new_message):
-        # append messages so that the last message printed is at bottom
-        self.placer.updateChatBoard(new_message)
+#     def __update_messages(self, new_message):
+#         # append messages so that the last message printed is at bottom
+#         self.placer.updateChatBoard(new_message)
 
-    def listenUserMessage(self):
-        # self.user_message["state_phrase"] = "      Listening..."
-        self.placer.updateUserBoard(self.user_message.values())
+#     def listenUserMessage(self):
+#         # self.user_message["state_phrase"] = "      Listening..."
+#         self.placer.updateUserBoard(self.user_message.values())
 
-    def confirmUserMessage(self, message):
-        self.user_message["message"] = message
-        self.user_message["state_phrase"] = "      Send this message?"
-        self.placer.updateUserBoard(self.user_message.values())
+#     def confirmUserMessage(self, message):
+#         self.user_message["message"] = message
+#         self.user_message["state_phrase"] = "      Send this message?"
+#         self.placer.updateUserBoard(self.user_message.values())
 
-    def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
-        self.user_message["message"] =  ""
-        self.user_message["state_phrase"] =  ""
-        self.placer.updateUserBoard(self.user_message.values())
+#     def sendUserMessage(self):
+#         self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
+#         self.user_message["message"] =  ""
+#         self.user_message["state_phrase"] =  ""
+#         self.placer.updateUserBoard(self.user_message.values())
 
-    def placeBoard(self, frame):
-        frame = self.placer.placeBoard(frame)
-        self.board_image.emit(frame)
+#     def placeBoard(self, frame):
+#         frame = self.placer.placeBoard(frame)
+#         self.board_image.emit(frame)
 
-    def receive(self):
-        self.messenger.listen()
+#     def receive(self):
+#         self.messenger.listen()
 
 class IMUBoard(QWidget):
     # CONSOLIDATE WITH MESSAGEBOARD - REFACTOR
@@ -210,7 +151,7 @@ class IMUBoard(QWidget):
     def __init__(self, num_lines=2, parent=None):
         super().__init__(parent)
         # get an MQTT link
-        self.messenger = MQTTNetObject(board="ece180d/MEAT/imu")
+        self.messenger = mqtt.MQTTNetObject(board="ece180d/MEAT/imu")
         self.board_shape = (40, 400)
         self.placer = placer.BoardPlacer(self.board_shape, "tl", num_lines)
 
@@ -242,6 +183,7 @@ class HandTracker(QObject):
     def findHand(self, frame):
         frame, loc = self.tracker.locAdder(frame)
         self.hand_image.emit(frame)
+
 # @desc
 # widget for handling a display from an opencv source
 class DisplayWidget(QWidget):
@@ -453,7 +395,7 @@ class MainWidget(QWidget):
 
         # widgets and objects
         self.display = DisplayWidget()
-        self.text_board = MessageBoard('default_username')
+        self.text_board = mqtt.MessageBoard('default_username')
         self.imu_board = IMUBoard()
         self.start_button = QPushButton('START')
         self.tracker = HandTracker()
@@ -463,7 +405,7 @@ class MainWidget(QWidget):
         self.carousel = ImageOverlayCarousel()
         self.homographyIsActive = False
         self.audio_phrases = {}
-        self.audio_recognizer = AudioObject(self.audio_phrases)
+        self.audio_recognizer = audio.AudioObject(self.audio_phrases)
         self.layout = QVBoxLayout()
         self.setMainLayout()
 

@@ -12,8 +12,6 @@ class SpeechRecognizer:
         self.current_phrase = None
         # self.callback = lambda: pass
 
-    
-
     def listenForPhrases(self):
         new_mic = sr.Microphone()
         with new_mic as source:
