@@ -22,8 +22,8 @@ dependencies:
   - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
   - pip:
-    - pocketsphinx==0.1.15
     - pyaudio==0.2.11
     - setuptools==50.3.2
+    - pocketsphinx==0.1.15
     - speechrecognition==3.8.1
 
