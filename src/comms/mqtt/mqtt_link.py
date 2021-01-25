@@ -47,11 +47,15 @@ class MQTTLink:
         self.receiveMessage(cur)
 
 
-    def __init__(self, board):
+    def __init__(self, board, user):
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
-        self.messages = queue.Queue()
+        self.messages = {"acks":[],
+                         "messages":[]
+                        }
+        self.count = 0
+        self.user = user
 
         #configure client
         # configure transmission
@@ -71,26 +75,52 @@ class MQTTLink:
         self.rx.disconnect()
 
     def __addMessage(self, message_content):
-            self.messages.put(message_content)
+        self.messages[message_content["ID"]] = message_content
+        #self.messages.put(message_content)
+    
+    def __add_ack(self,ID):
+       self.messages["acks"].append(ID)
+
+    def __recieve_ack(self, ID):
+        for ack in self.messages["acks"]:
+            if ID == ack:
+                self.messages["acks"].remove(ack) # does assume no repeats but each message should have a unique id
+                for message in self.messages["messages"]:
+                    if ID == message.ID:
+                        self.messages["messages"].remove(
 
     def receiveMessage(self, message):
+        # note: there can be multiple messages )in the stack recieved
         form_message = message['sender'] + " said: " + message['data']
+        
+        # recieve acks
+        for ack in message["acks"]:
+            self.__recieve_ack(ack)
+
+        # add any new acks
+
+         
+
         print(form_message)
     
-    def addText(self, text, sender):
+    def addText(self, text, reciever):
         now = datetime.datetime.now()
+        ID = self.board + '_' + self.user + '_' + str(self.count)
         msg = {
             "message_type" : "text",
-            "sender" : sender,
+            "sender" : self.user,
+            "reciever" : reciever,
             "data" : text,
-            "time":{
+            "time" : {
                 "hour":now.hour,
                 "minute": now.minute,
                 "second": now.second
-            }
+            },
+            "ID" : ID
         }
         self.__addMessage(msg)
 
+    
     def send(self):
         self.tx.loop_start()
 
