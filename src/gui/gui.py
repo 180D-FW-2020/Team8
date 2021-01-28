@@ -28,14 +28,12 @@ try:
     import Queue
 except:
     import queue as Queue
-# from os import path
 import cv2 as cv
 import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import threading
-# import IMU
 import message_placer as placer
 import mqtt_link as mqtt
 import audio
@@ -691,6 +689,8 @@ class MainWidget(QWidget):
         self.layout.removeWidget(widget)
         widget.deleteLater()
         widget = None
+
+
 
     # @desc
     # takes a state and a handler function for any detected phrase for that state.
