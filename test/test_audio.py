@@ -1,6 +1,10 @@
 import base_test
 from src.envrd.audio.audio import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
-# example schema for test imports
+phrases = {'testing': False}
+rec = SpeechRecognizer(phrases)
 
-# TODO
+rec.listenForPhrases()

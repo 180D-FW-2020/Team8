@@ -14,8 +14,6 @@ PATH = [
         '../envrd',
         '../imgproc',
         '../../data/gui'
-        # '../envrd/gesture_detector',
-        '../env_reader/image_tracking/hand_tracker'
        ]
 
 import sys
@@ -33,11 +31,10 @@ import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-import threading
 import message_placer as placer
 import mqtt_link as mqtt
-import audio
-import hand_tracker
+import audio.audio as audio
+import hand_tracker.hand_tracker as hand_tracker
 # import static_homography
 # import gest_classifier
 
@@ -59,11 +56,12 @@ ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 # @desc
 # dump all required signals here 
 # (likely won't be needed since signals are threadsafe and can be emitted/received outside thread)
-class JobSignals():
-    pass
-    # error = pyqtSignal(tuple) # redirect error reporting
-    # output = pyqtSignal(object) # notify slot of function returned value
-    # done = pyqtSignal() # notify main thread of completion
+class JobSignals(QObject):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+    error = pyqtSignal(tuple) # redirect error reporting
+    output = pyqtSignal(object) # notify slot of function returned value
+    done = pyqtSignal() # notify main thread of completion
 
 # @desc
 # utility class for handling multithreading in Qt
@@ -83,13 +81,13 @@ class JobRunner(QRunnable):
             output = self.function(*self.args, **self.kwargs)
         except:
             return
-            # traceback.print_exc()
-            # exctype, value = sys.exc_info()[:2]
-            # self.signals.error.emit((exctype, value, traceback.format_exc()))
-        # else:
-            # self.signals.output.emit(output)
-        # finally:
-        #     self.signals.done.emit()
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.output.emit(output)
+        finally:
+            self.signals.done.emit()
 
 ## MQTT QObject Class #######################################################################################################
 ## QObject connector for MQTT stuff
@@ -135,28 +133,8 @@ class AudioObject(QObject, audio.SpeechRecognizer):
         except ValueError:
             pass
 
-
-    # @desc
-    # waits for a keyphrase to be found, then returns the first detected phrase
-    # def recordDetection(self):
-    #     end = False
-    #     try:
-    #         while(end == False):
-    #             for phrase, found in self.recognizer.phrases.items():
-    #                 if found == True:
-    #                     self.recognizer.resetDetection(phrase)
-    #                     self.detected_phrase.emit(phrase)
-    #                     # self.recognizer.teardown()
-    #                     # end = True
-    #     except TypeError:
-    #         pass
-    #     except ValueError:
-    #         pass
-
     def speechHandler(self):
-        # self.timer.start(ATIMEOUT)
         self.listenForPhrases()
-        # self.recordDetection()
 
 ## Message Board Class #######################################################################################################
 ## takes in data from a general MQTT board and places it in UI, also takes in user input to send messages
@@ -454,7 +432,7 @@ class MainWidget(QWidget):
         self.text_board = MessageBoard('default_username')
         self.imu_board = IMUBoard()
         self.start_button = QPushButton('START')
-        self.tracker = HandTracker()
+        # self.tracker = HandTracker()
         # self.video = TestVideo()
         self.video = ThreadVideo()
         self.frame_timer = QTimer(self)
@@ -537,16 +515,13 @@ class MainWidget(QWidget):
         self.imageStateHandler()
 
         # signals and slots
-        # self.video.image_data.connect(lambda x: self.text_board.placeBoard(x)) # image_data is handed to the board first
         self.frame_data.connect(lambda x: self.text_board.placeBoard(x)) 
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.text_board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
-        # self.text_board.board_image.connect(lambda x: self.display.setImage(x))
         self.text_board.board_image.connect(lambda x:self.imu_board.placeBoard(x))
-        self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
-        self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
+        # self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
+        # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
 
-        # self.start_button.clicked.connect(self.video.start)
         self.frame_timer.timeout.connect(lambda: self._pass_image(self.video.buffer))
         self.start_button.clicked.connect(self._start_video)
         self.start_button.clicked.connect(lambda: self.deleteWidget(self.start_button))
@@ -561,7 +536,6 @@ class MainWidget(QWidget):
 
         # threading
         self.threadpool = QThreadPool()
-
         self.__create_worker(self._print_phrases)
 
     def _start_video(self):
@@ -573,7 +547,6 @@ class MainWidget(QWidget):
         if not imqueue.empty():
             img = imqueue.get()
             if img is not None and len(img) > 0:
-                # print("emitting frame")
                 if self.homographyIsActive:
                     self.frame_data.emit(self.carousel.run(img))
                 else:
@@ -589,8 +562,6 @@ class MainWidget(QWidget):
 
     def calibrationStateHandler(self):
         self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
-        # self.s_cal_ht.addTransition(SOMESIG, self.s_cal_wave)
-        # self.s_cal_wave.addTransition(SOMESIG, self.s_cal_fin)
         self.s_cal.addTransition(self.s_cal.finished, self.s_main)
 
     def messageStateHandler(self):
@@ -618,24 +589,17 @@ class MainWidget(QWidget):
 
         # transition back to listening if user doesn't like message
         self.s_msg_confirm.addTransition(self.noSignal, self.s_msg_listen)
-        # self.s_msg_send.addTransition(someMQTTsignal, self.s_msg_init)
 
     def imageStateHandler(self):
         img_init_handler = lambda x: self.initSlot(x)
         self._phraseOptionHandler(self.s_img_init, img_init_handler)
         self.s_img_init.addTransition(self.imgEntry, self.s_img_display)
-        # self.s_img_find.addTransition(someFlatSurfacesignal, self.s_img_confirm)
-        # img_confirm_handler = lambda x: self.confirmSlot(x)
-        # self._phraseOptionHandler(self.s_img_confirm, img_confirm_handler)
-        # self.s_img_confirm.addTransition(self.yesSignal, self.s_img_display)
-        # self.s_img_confirm.addTransition(self.noSignal, self.s_img_init)
         self.s_img_display.entered.connect(self.toggleHomography)
         img_display_handler = lambda x: self.displaySlot(x)
         self._phraseOptionHandler(self.s_img_display, img_display_handler)
         self.nextSignal.connect(self.carousel.next)
         self.s_img_display.addTransition(self.imgExit, self.s_img_init)
         self.s_img_display.exited.connect(self.toggleHomography)
-        # self.audio_recognizer.detected_phrase.connect(someHomographyProcess during s_img_display)
 
     def toggleHomography(self):
         self.homographyIsActive = not self.homographyIsActive
