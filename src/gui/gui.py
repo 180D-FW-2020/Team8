@@ -114,24 +114,23 @@ class AudioObject(QObject, audio.SpeechRecognizer):
     # @desc
     # emits a string containing the most recently transcribed phrase
     def sendCurrentPhrase(self):
-        s = self.current_phrase
-        if s != None:
-            self.transcribed_phrase.emit(s)
-            return
-        else:
-            time.sleep(1)
-            self.sendCurrentPhrase()
+        while self.current_phrase == None:
+            continue
+        self.transcribed_phrase.emit(self.current_phrase)
 
     def receivePhrase(self):
-        try:
-            for phrase, found in self.phrases.items():
-                if found == True:
-                    self.resetDetection(phrase)
-                    self.detected_phrase.emit(phrase)
-        except TypeError:
-            pass
-        except ValueError:
-            pass
+        print("entered receivePhrase")
+        while True:
+            time.sleep(0.5)
+            try:
+                for phrase, found in self.phrases.items():
+                    if found == True:
+                        self.resetDetection(phrase)
+                        self.detected_phrase.emit(phrase)
+            except TypeError:
+                pass
+            except ValueError:
+                pass
 
     def speechHandler(self):
         self.listenForPhrases()
@@ -509,6 +508,10 @@ class MainWidget(QWidget):
         for state, phrases in states_with_phrases.items():
             self._setStatePhrases(state, phrases)
 
+        # threading
+        self.threadpool = QThreadPool()
+        self.__create_worker(self._print_phrases)
+
         self.s_start.addTransition(self.start_button.clicked, self.s_main)
         self.calibrationStateHandler()
         self.messageStateHandler()
@@ -519,6 +522,7 @@ class MainWidget(QWidget):
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.text_board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
         self.text_board.board_image.connect(lambda x:self.imu_board.placeBoard(x))
+        self.text_board.board_image.connect(lambda x: self.display.setImage(x))
         # self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
         # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
 
@@ -534,9 +538,6 @@ class MainWidget(QWidget):
         self.state_machine.setInitialState(self.s_start)
         self.state_machine.start()
 
-        # threading
-        self.threadpool = QThreadPool()
-        self.__create_worker(self._print_phrases)
 
     def _start_video(self):
         print("starting video...")
@@ -562,6 +563,7 @@ class MainWidget(QWidget):
 
     def calibrationStateHandler(self):
         self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.speechHandler))
+        self.s_main.entered.connect(lambda: self.__create_worker(self.audio_recognizer.receivePhrase))
         self.s_cal.addTransition(self.s_cal.finished, self.s_main)
 
     def messageStateHandler(self):
@@ -571,7 +573,8 @@ class MainWidget(QWidget):
         self.s_msg_init.addTransition(self.msgEntry, self.s_msg_listen)
 
         # when state is entered, listen for 5 seconds
-        self.s_msg_listen.entered.connect(self.messageListenSlot)
+        message_worker = lambda: self.__create_worker(self.messageListenSlot)
+        self.s_msg_listen.entered.connect(message_worker)
         
         # then, at end fo 5 seconds, transition to confirming the message
         self.s_msg_listen.addTransition(self.audio_recognizer.transcribed_phrase, self.s_msg_confirm)
@@ -607,7 +610,7 @@ class MainWidget(QWidget):
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
         self.audio_recognizer.resetCurrentPhrase()
-        self.__create_worker(self.audio_recognizer.sendCurrentPhrase())
+        self.audio_recognizer.sendCurrentPhrase()
 
 
     # NOTE: replace message slots with textwidget functions or smth if desired
