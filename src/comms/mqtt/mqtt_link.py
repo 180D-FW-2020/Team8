@@ -17,7 +17,7 @@ import queue
 
 class MQTTLink:
 
-        # MQTT client functions
+    # MQTT client functions
     def __on_connect_subscriber(self, client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
@@ -44,7 +44,8 @@ class MQTTLink:
         #filter data to get only json
         #parse message
         cur = json.loads(str(message.payload)[2:-1])
-        self.receiveMessage(cur)
+        if not (cur["senderID"]==self.user):
+            self.receiveMessage(cur)
 
 
     def __init__(self, board, user):
@@ -52,10 +53,12 @@ class MQTTLink:
         self.rx = mqtt.Client()
         self.board = board
         self.messages = {"acks":[],
-                         "messages":[]
+                         "messages":[],
+                         "senderID": user
                         }
         self.count = 0
         self.user = user
+        self.last_recieved = {}
 
         #configure client
         # configure transmission
@@ -70,39 +73,60 @@ class MQTTLink:
         self.tx.connect_async('mqtt.eclipseprojects.io')
         self.rx.connect_async('mqtt.eclipseprojects.io')
 
+        self.listen_called = False
+
     def __del__(self):
+        if self.listen_called:
+            self.rx.loop_stop()
         self.tx.disconnect()
         self.rx.disconnect()
 
     def __addMessage(self, message_content):
-        self.messages[message_content["ID"]] = message_content
+        self.messages["messages"].append(message_content)
+        self.count +=1
         #self.messages.put(message_content)
     
     def __add_ack(self,ID):
-       self.messages["acks"].append(ID)
+        if not (ID in self.messages["acks"]):
+            self.messages["acks"].append(ID)
 
     def __recieve_ack(self, ID):
-        for ack in self.messages["acks"]:
-            if ID == ack:
-                self.messages["acks"].remove(ack) # does assume no repeats but each message should have a unique id
-                for message in self.messages["messages"]:
-                    if ID == message.ID:
-                        self.messages["messages"].remove(
+        for message in self.messages["messages"]:
+            if ID == message["ID"]:
+                #self.messages["acks"].remove(ID) # does assume no repeats but each message should have a unique id
+               # for message in self.messages["messages"]:
+                #    if ID == message["ID"]:
+                self.messages["messages"].remove(message)
+            
 
     def receiveMessage(self, message):
         # note: there can be multiple messages )in the stack recieved
-        form_message = message['sender'] + " said: " + message['data']
-        
+        form_message = ''
+        if message["senderID"] not in self.last_recieved:
+            self.last_recieved[message["senderID"]]= []
+        for msg in message["messages"]:
+            if (msg["reciever"] == self.user or msg["reciever"] == "all") and (msg["ID"] not in self.last_recieved[message["senderID"]]):
+                form_message += msg['sender'] + " said: " + msg['data'] + '\n'
+
+
         # recieve acks
         for ack in message["acks"]:
             self.__recieve_ack(ack)
 
         # add any new acks
+        for msg in message["messages"]:
+            self.__add_ack(msg["ID"])
 
-         
+        if form_message : 
+            print(form_message)
 
-        print(form_message)
-    
+        # record message IDs
+        IDs = []
+        for msg in message["messages"]:
+            IDs.append(msg["ID"])
+        #print(IDs)
+        self.last_recieved[message["senderID"]] = IDs
+
     def addText(self, text, reciever):
         now = datetime.datetime.now()
         ID = self.board + '_' + self.user + '_' + str(self.count)
@@ -120,22 +144,24 @@ class MQTTLink:
         }
         self.__addMessage(msg)
 
-    
     def send(self):
         self.tx.loop_start()
 
         # just toss it all out there
-        while not self.messages.empty():
-            next_message = self.messages.get()
-            print(next_message)
-            self.tx.publish(self.board, json.dumps(next_message), qos=1)
+        self.tx.publish(self.board, json.dumps(self.messages), qos=1)
+
+        #while not self.messages.empty():
+        #    next_message = self.messages.get()
+        #    print(next_message)
+        #    self.tx.publish(self.board, json.dumps(next_message), qos=1)
 
         self.tx.loop_stop()
 
     def listen(self, duration= -1):
         #only listen if a reciever is initiated
         if duration == -1:
-            self.rx.loop_forever()
+            self.rx.loop_start() # changed from loop forever so nonblocking thread
+            self.listen_called = True
         else:
             self.rx.loop_start()
             time.sleep(duration)
