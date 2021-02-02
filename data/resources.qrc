@@ -1,0 +1,6 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="emotes">
+        <file alias="notimpressed.png">emotes/notimpressed.png</file>
+    </qresource>
+</RCC>
