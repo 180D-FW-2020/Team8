@@ -3,8 +3,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import audio.audio as audio
 
-
-
 class AudioObject(QObject, audio.SpeechRecognizer):
     detected_phrase = pyqtSignal(str)
     transcribed_phrase = pyqtSignal(str)

@@ -32,8 +32,11 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import message_placer as placer
-import mqtt 
 import hand_tracker.hand_tracker as hand_tracker
+
+# implementations with out modules
+import mqtt 
+import speech
 
 
 DRESW = 1280 # resolution width
