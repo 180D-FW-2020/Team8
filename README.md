@@ -6,12 +6,10 @@ Senior Capstone project for Fall and Winter of 2020.
 
 We will be creating a framework for developing AR micoroservices. This Machine-Learning Enhanced Augmented-Reality Toolkit (MEAT) will be used to generate a few example services:
 
--  Gesture Recognition
-    - hotkeys and sign language to text
-- Basketball Shot Analysis
-- Object Location
-- Screen Embedder
-    - placement of virtual screen(s) onto visible surfaces
+- Gesture Recognition
+- AR Games
+- Object Location and Tracking
+- Screen Embedder - placement of virtual screen(s) onto visible surfaces
 
 ## Usage
 
@@ -27,3 +25,4 @@ git clone git@github.com:180D-FW-2020/Team8.git
 ```
 conda env create -f environment.yml
 ```
+For any other dependencies (or for non-conda users) visit the wiki.

@@ -17,5 +17,6 @@ dependencies:
     - pyaudio==0.2.11
     - pocketsphinx==0.1.15
     - setuptools==50.3.2
+    - pocketsphinx==0.1.15
     - speechrecognition==3.8.1
 
