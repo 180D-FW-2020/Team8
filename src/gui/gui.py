@@ -35,11 +35,6 @@ import message_placer as placer
 import mqtt_link as mqtt
 import audio.audio as audio
 import hand_tracker.hand_tracker as hand_tracker
-# import static_homography
-# import gest_classifier
-
-for lib in PATH:
-    sys.path.remove(lib)
 
 
 DRESW = 1280 # resolution width
