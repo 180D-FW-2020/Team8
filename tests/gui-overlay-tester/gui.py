@@ -11,6 +11,7 @@ import time
 from os import path
 import cv2 as cv
 import numpy as np
+import pyautogui
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -21,6 +22,7 @@ import threading
 # import audio
 # import gest_classifier
 # import IMU
+import csv
 
 DRESW = 1280 # resolution width
 DRESH = 720 # res height
@@ -170,6 +172,8 @@ class TestVideo(QObject):
         self.overlayer = ImageOverlayCarousel()
         self.enteredstate = 0
         self.index = 0
+        self.base_kp_matches = []
+        self.active_kp_matches = []
 
     # @desc
     # event trigger for an instantaneous event; use when an event overload is not desired
@@ -182,6 +186,21 @@ class TestVideo(QObject):
     
     def rotateCarousel(self):
         self.overlayer.next()
+
+    def printData(self):
+        self.overlayer.printD()
+    
+    def screenshot(self):
+        im = pyautogui.screenshot()
+        im = cv.cvtColor(np.array(im), cv.COLOR_RGB2BGR)
+        im = im[40:800, 0:1440]
+        cv.imwrite("testimg.png", im)
+
+    def calibrate_base(self):
+        pass
+    
+    def calibrate_active(self):
+        pass
 
     # @desc
     # handles timer events triggered by this class
@@ -204,10 +223,11 @@ class ImageOverlayCarousel(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = cv.imread('model2.png')
-        self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
+        self.overlay = [cv.imread('img_edited.jpg'), cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
         self.trigger = QBasicTimer()
         self.counter = 0
         self.index = 0
+        self.data = []
 
     # @desc
     # event trigger for an instantaneous event; use when an event overload is not desired
@@ -220,6 +240,17 @@ class ImageOverlayCarousel(QObject):
             self.index += 1
         else:
             self.index = 0
+
+    def printD(self):
+        fields = ['distance', 'matches']
+        print(self.data)
+        with open('homodata_paper_24.csv', 'w') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(fields)
+            csvwriter.writerows(self.data)
+
+    def get_keypoint_matches(self, cameraimage):
+        pass
 
     # run video embedder
     def run(self, cameraimage):
@@ -234,9 +265,11 @@ class ImageOverlayCarousel(QObject):
 
         kp2, des2 = orb.detectAndCompute(cameraimage, None)
         matches = self.generateMatches(des1, des2)
-        print(len(matches))
 
-        if len(matches) > 200:
+        print(len(matches))
+        self.data.append(["6", len(matches)])
+
+        if len(matches) > 170:
             return self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)
         return cameraimage
 
@@ -303,17 +336,27 @@ class MainWidget(QWidget):
         self.start_button = QPushButton('START')
         self.next_button = QPushButton('NEXT')
         self.carousel_button = QPushButton('CAROUSEL')
+        #self.data_button = QPushButton('DATA')
+        #self.calibrate1_button = QPushButton('CALIBRATE1')
+        #self.calibrate2_button = QPushButton('CALIBRATE2')
+        #self.screenshot_button = QPushButton('SHOT')
 
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.start_button.clicked.connect(self.video.start)
         self.next_button.clicked.connect(self.video.next)
         self.carousel_button.clicked.connect(self.video.rotateCarousel)
+        #self.data_button.clicked.connect(self.video.printData)
+        #self.calibrate1_button.clicked.connect(self.video.calibrate_base)
+        #self.calibrate2_button.clicked.connect(self.video.calibrate_active)
+        #self.screenshot_button.clicked.connect(self.video.screenshot)
 
         layout = QVBoxLayout()
         layout.addWidget(self.display)
         layout.addWidget(self.start_button)
         layout.addWidget(self.next_button)
+        #layout.addWidget(self.data_button)
         layout.addWidget(self.carousel_button)
+        #layout.addWidget(self.screenshot_button)
 
         self.setLayout(layout)
 
