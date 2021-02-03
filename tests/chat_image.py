@@ -2,20 +2,24 @@ import cv2 as cv
 import paho.mqtt.client as mqtt
 
 class ARChat():
-    def __init__(self, image):
+    def __init__(self):
         self.messages = []
-        self.im = image
     
     def queue(self, user, message, color, timestamp):
         self.messages.insert(0, (user, message, color, timestamp))
+        print(self.messages)
 
-    def write(self, out):
+    def write(self, im, out):
         index = 0
         for message in self.messages:
-            cv.putText(self.im, "<" + message[3] + "> " + message[0] + ": " + message[1], (20, self.im.shape[0]-80-50*index), cv.FONT_HERSHEY_SIMPLEX, 1, message[2], 2, cv.LINE_AA)
+            cv.putText(im, "<" + message[3] + "> " + message[0] + ": " + message[1], (20, im.shape[0]-80-50*index), cv.FONT_HERSHEY_SIMPLEX, 1, message[2], 2, cv.LINE_AA)
             index += 1
-        cv.imwrite(out, self.im)
-    
+        cv.imwrite(out, im)
+
+
+if __name__ == '__main__':
+    chat = ARChat()
+
     def on_connect(client, userdata, flags, rc):
         print("Connection returned result: " + str(rc))
         client.subscribe("ece180d/chatar", qos=1)
@@ -28,30 +32,16 @@ class ARChat():
 
     def on_message(client, userdata, message):
         print(str(message.payload))
-        self.queue(str(message.payload), (255,255,0))
+        chat.queue(str(userdata), str(message.payload), (255,255,0), '12:46')
+        chat.write(cv.imread('img.jpg', 1), 'img_edited.jpg')
 
-
-if __name__ == '__main__':
-    chat = ARChat(cv.imread('img.jpg', 1))
-    chat.queue('Nico', 'Wo0ot', (255,255,0), '12:31')
-    chat.queue('Nate', 'yay', (0,0,255), '12:35')
-    chat.queue('Tommy', 'please work', (255,0,255), '12:35')
-    chat.queue('Michael', 'it works', (255,0,0), '12:45')
-    chat.write('img_edited.jpg')
-
-"""
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_disconnect = on_disconnect
-client.on_message = on_message
-
-client.connect_async('mqtt.eclipseprojects.io')
-
-client.loop_start()
-
-while True:
-    pass
-
-client.loop_stop()
-client.disconnect()
-"""
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
+    client.on_message = on_message
+    client.connect_async('mqtt.eclipseprojects.io')
+    client.loop_start()
+    while True:
+        pass
+    client.loop_stop()
+    client.disconnect()
