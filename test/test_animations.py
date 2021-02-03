@@ -48,6 +48,7 @@ class DisplayWidget(QWidget):
         self.image = QImage()
 
 class MainWidget(QWidget):
+    spawn = pyqtSignal(list)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -62,6 +63,7 @@ class MainWidget(QWidget):
         self.setMainLayout()
 
         # signals and slots
+        self.spawn.connect(lambda x: self.emotebox.spawn_emotes(x))
         self.video.image_data.connect(lambda x: self.display.setImage(x))
         self.video.start()
 
@@ -73,7 +75,7 @@ class MainWidget(QWidget):
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
-            self.emotebox.test.emit([4,1,7])
+            self.spawn.emit([4,1,7])
 
 class testUI:
     def __init__(self):
