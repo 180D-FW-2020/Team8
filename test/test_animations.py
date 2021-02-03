@@ -73,7 +73,7 @@ class MainWidget(QWidget):
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
-            self.emotebox.test.emit()
+            self.emotebox.test.emit([4,1,7])
 
 class testUI:
     def __init__(self):

@@ -9,8 +9,27 @@ HEIGHT = 480
 XCENTER = WIDTH//2
 YCENTER = HEIGHT//2
 
+EMOTEIDS = {
+   1 : ":/emotes/angry",
+   2 : ":/emotes/cringe",
+   3 : ":/emotes/cry",
+   4 : ":/emotes/doubt",
+   5 : ":/emotes/LOL",
+   6 : ":/emotes/welp",
+   7 : ":/emotes/frown",
+   8 : ":/emotes/grin",
+   9 : ":/emotes/love",
+   10 : ":/emotes/ofcourse",
+   11 : ":/emotes/shock",
+   12 : ":/emotes/simp",
+   13 : ":/emotes/smile",
+   14 : ":/emotes/hmmm",
+   15 : ":/emotes/tongue",
+   16 : ":/emotes/wink"
+}
+
 class EmoteWidget(QWidget):
-    test = pyqtSignal()
+    test = pyqtSignal(list)
     def __init__(self, parent=None):
         super().__init__(parent)
         # self.resize(WIDTH,HEIGHT)
@@ -26,12 +45,13 @@ class EmoteWidget(QWidget):
         self.animations_group = QParallelAnimationGroup()
 
         ## signals and slots
-        self.test.connect(self.create_animation)
+        # self.test.connect(self.create_animation)
+        self.test.connect(lambda x: self.spawn_emotes(x))
         self.animations_group.finished.connect(self.clearAnimations)
 
-    def create_animation(self):
+    def create_animation(self, emoteID):
         emotebox = QLabel(self)
-        emote_pixmap = QPixmap(":/emotes/notimpressed.png")
+        emote_pixmap = QPixmap(EMOTEIDS[emoteID])
 
         emotebox.resize(200,200)
         emotebox.setPixmap(
@@ -74,6 +94,10 @@ class EmoteWidget(QWidget):
         emotebox.setHidden(False)
         
         self.addToAnimationsQueue(anim_final)
+
+    def spawn_emotes(self, listIDs):
+        for emoteID in listIDs:
+            self.create_animation(emoteID)
 
     def set_layout(self):
         self.setLayout(self.layout)

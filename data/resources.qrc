@@ -1,6 +1,21 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
     <qresource prefix="emotes">
-        <file alias="notimpressed.png">emotes/notimpressed.png</file>
+        <file alias="doubt">emotes/notimpressed.png</file>
+        <file alias="angry">emotes/angry.png</file>
+        <file alias="cringe">emotes/cringe.png</file>
+        <file alias="cry">emotes/crying.png</file>
+        <file alias="LOL">emotes/crylaugh.png</file>
+        <file alias="welp">emotes/flippedsmile.png</file>
+        <file alias="frown">emotes/frown.png</file>
+        <file alias="grin">emotes/grinningface.png</file>
+        <file alias="love">emotes/hearteyes.png</file>
+        <file alias="ofcourse">emotes/rolledeyes.png</file>
+        <file alias="shock">emotes/scream.png</file>
+        <file alias="simp">emotes/simp.png</file>
+        <file alias="smile">emotes/smile.png</file>
+        <file alias="hmmm">emotes/thinking.png</file>
+        <file alias="tongue">emotes/tongue.png</file>
+        <file alias="wink">emotes/wink.png</file>
     </qresource>
 </RCC>
