@@ -86,79 +86,6 @@ class JobRunner(QRunnable):
         finally:
             self.signals.done.emit()
 
-
-
-## Message Board Class #######################################################################################################
-## takes in data from a general MQTT board and places it in UI, also takes in user input to send messages
-class MessageBoard(QWidget):
-    board_image = pyqtSignal(np.ndarray)
-    def __init__(self, username='xxxx', num_lines=5, parent=None):
-        super().__init__(parent)
-        # get an MQTT link
-        self.messenger = MQTTNetObject(board="ece180d/MEAT/general")
-        self.board_shape = (200, 200)
-        self.placer = placer.BoardPlacer(self.board_shape, "br", num_lines)
-
-        # set up message reading
-        self.num_lines = num_lines
-        self.user_message = {"username":username, "message":"", "state_phrase":""}
-
-        # update message list upon new message
-        self.messenger.new_message.connect(lambda message: self.__update_messages(message))
-
-    def __update_messages(self, new_message):
-        # append messages so that the last message printed is at bottom
-        self.placer.updateChatBoard(new_message)
-
-    def listenUserMessage(self):
-        # self.user_message["state_phrase"] = "      Listening..."
-        self.placer.updateUserBoard(self.user_message.values())
-
-    def confirmUserMessage(self, message):
-        self.user_message["message"] = message
-        self.user_message["state_phrase"] = "      Send this message?"
-        self.placer.updateUserBoard(self.user_message.values())
-
-    def sendUserMessage(self):
-        self.messenger.sendMessage(self.user_message["message"], self.user_message["username"])
-        self.user_message["message"] =  ""
-        self.user_message["state_phrase"] =  ""
-        self.placer.updateUserBoard(self.user_message.values())
-
-    def placeBoard(self, frame):
-        frame = self.placer.placeBoard(frame)
-        self.board_image.emit(frame)
-
-    def receive(self):
-        self.messenger.listen()
-
-class IMUBoard(QWidget):
-    # CONSOLIDATE WITH MESSAGEBOARD - REFACTOR
-    board_image = pyqtSignal(np.ndarray)
-    def __init__(self, num_lines=2, parent=None):
-        super().__init__(parent)
-        # get an MQTT link
-        self.messenger = MQTTNetObject(board="ece180d/MEAT/imu")
-        self.board_shape = (40, 400)
-        self.placer = placer.BoardPlacer(self.board_shape, "tl", num_lines)
-
-        # set up message reading
-        self.num_lines = num_lines
-
-        # update message list upon new message
-        self.messenger.new_message.connect(lambda message: self.__update_messages(message))
-
-    def __update_messages(self, new_message):
-        # append messages so that the last message printed is at bottom
-        self.placer.updateChatBoard(new_message)
-
-    def placeBoard(self, frame):
-        frame = self.placer.placeBoard(frame)
-        self.board_image.emit(frame)    
-    
-    def receive(self):
-        self.messenger.listen()
-
 # @desc
 # widget for handling a display from an opencv source
 class DisplayWidget(QWidget):
@@ -593,16 +520,4 @@ class MainWidget(QWidget):
             state.entered.connect(add_phrase)
             state.exited.connect(rm_phrase)
 
-# @desc
-# initializes all UI widgets
-class UI:
-    def __init__(self):
-        self.qapp = QApplication(sys.argv)
-        self.window = QMainWindow()
-        self.main_widget = MainWidget()
-        self.window.setCentralWidget(self.main_widget)
-        self.window.show()
-        sys.exit(self.qapp.exec_())
 
-if __name__ == '__main__':
-    someUI = UI()
