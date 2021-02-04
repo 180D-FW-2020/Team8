@@ -51,6 +51,7 @@ class MQTTLink:
 
 
     def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface"):
+        super(MQTTLink, self).__init__(board, user, color, emoji)
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
