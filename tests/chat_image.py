@@ -5,6 +5,7 @@ class ARChat():
     def __init__(self, path):
         self.messages = []
         self.rooms = []
+        self.roomIndex = 0
         self.wordlimit = 64
         self.boardpath = path
 
@@ -48,15 +49,18 @@ class ARChat():
                 msg = self.process_msg(message)
                 self.messages.insert(0, ("", msg[0], color, ""))
                 self.queue(user, msg[1], color, "", True)
-        print(self.messages)
 
     def process_msg(self, message):
         for i in range(self.wordlimit, 0, -1):
             if(message[i] == ' '):
                 return (message[:i], message[i+1:])
 
-    # post messages to chatboard
     def write(self):
+        self.writeMessages()
+        self.writeRooms()
+
+    # post messages to chatboard
+    def writeMessages(self):
         im = cv.imread('img.jpg', 1)
         index = 0
         for message in self.messages:
@@ -67,24 +71,31 @@ class ARChat():
             index += 1
         cv.imwrite(str(self.getPath()) + '.jpg', im)
     
-    # queue mqtt topic for chatboard placement
-    def queueRoom(self, room, highlighted):
-        self.rooms.append((room, highlighted))
+    # set rooms for chatboard placement
+    def setRooms(self, rooms, index):
+        self.rooms = rooms
+        self.roomIndex = index
+    
+    def getRooms(self, rooms):
+        return self.rooms
 
     # post message rooms to chatboard
     def writeRooms(self):
+        im = cv.imread(str(self.getPath()) + '.jpg', 1)
         index = 0
-        print(self.rooms)
-        for room, highlighted in self.rooms:
-            cv.putText(im, room, 10, im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
-            if(highlighted):
-                cv.putText(im, room, 10, im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv.LINE_AA, thickness = 2)
+        for room in self.rooms:
+            cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
+            if(index == self.roomIndex):
+                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 20, cv.LINE_AA)
+                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
+            index += 1
         cv.imwrite(str(self.getPath()) + '.jpg', im)
 
 
 if __name__ == '__main__':
+    # FIRST CHAT
     chat1 = ARChat("chat1")
-    inputMsg = '{"message_type": "text", "sender": "John", "receiver": "Tyler", "data": "This is the message that will be displayed in AR chat", "time": {"hour": 12, "minute": 31, "second": 22}, "ID": 12345, "color": [255,0,255]}'
+    inputMsg = '{"message_type": "text", "sender": "John", "receiver": "Tyler", "data": "This is the message that will be displayed in AR chat", "time": {"hour": 12, "minute": 31, "second": 22}, "ID": 12345, "color": [255,124,255]}'
     inputMsg1 = '{"message_type": "text", "sender": "Nico", "receiver": "Tyler", "data": "this is a test message", "time": {"hour": 12, "minute": 33, "second": 32}, "ID": 12345, "color": [255,0,0]}'
     inputMsg2 = '{"message_type": "text", "sender": "Michael", "receiver": "Tyler", "data": "this is another test message", "time": {"hour": 12, "minute": 34, "second": 12}, "ID": 12345, "color": [0,0,255]}'
     inputMsg3 = '{"message_type": "text", "sender": "Nate", "receiver": "Tyler", "data": "message", "time": {"hour": 12, "minute": 34, "second": 39}, "ID": 12345, "color": [0,255,255]}'
@@ -101,11 +112,23 @@ if __name__ == '__main__':
     chat1.queue(msg2["sender"], msg2["data"], msg2["color"], msg2["time"])
     chat1.queue(msg3["sender"], msg3["data"], msg3["color"], msg3["time"])
     chat1.queue(msg4["sender"], msg4["data"], msg4["color"], msg4["time"])
+
+    masterRooms = ["chat1", "chat2", "chat3"]
+
+    chat1.setRooms(masterRooms, 0)
     chat1.write()
 
-    """
-    chat1.queueRoom("chat1", True)
-    chat1.queueRoom("chat2", False)
-    chat1.queueRoom("chat3", False)
-    chat1.writeRooms(cv.imread('img.jpg', 1), str(chat1.getPath()) + '.jpg')
-    """
+    # SECOND CHAT
+    chat2 = ARChat("chat2")
+    chat2msg1 = '{"message_type": "text", "sender": "Chris", "receiver": "Tyler", "data": "This is the message that will be displayed in AR chat", "time": {"hour": 8, "minute": 3, "second": 1}, "ID": 12345, "color": [255,124,255]}'
+    chat2msg2 = '{"message_type": "text", "sender": "Jesus", "receiver": "Tyler", "data": "this is a test message", "time": {"hour": 9, "minute": 42, "second": 12}, "ID": 12345, "color": [255,0,0]}'
+
+    m1 = json.loads(chat2msg1)
+    m2 = json.loads(chat2msg2)
+
+    chat2.queue(m1["sender"], m1["data"], m1["color"], m1["time"])
+    chat2.queue(m2["sender"], m2["data"], m2["color"], m2["time"])
+
+    chat2.setRooms(masterRooms, 1)
+    chat2.write()
+
