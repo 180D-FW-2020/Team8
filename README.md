@@ -25,3 +25,4 @@ git clone git@github.com:180D-FW-2020/Team8.git
 ```
 conda env create -f environment.yml
 ```
+For any other dependencies (or for non-conda users) visit the wiki.
