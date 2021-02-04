@@ -50,7 +50,7 @@ class MQTTLink:
             self.receiveMessage(cur)
 
 
-    def __init__(self, board, user, color = "white", emoji = "/smileyface"):
+    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface"):
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
@@ -126,13 +126,13 @@ class MQTTLink:
         if form_message : 
             print(form_message)
 
-        # record message IDs
+        # record message IDss
         IDs = []
         for msg in message["messages"]:
             IDs.append(msg["ID"])
         self.last_recieved[message["senderID"]] = IDs
 
-    def addText(self, text, receiver):
+    def addText(self, text, receiver, emojis):
         now = datetime.datetime.now()
         ID = self.board + '_' + self.user + '_' + str(self.count)
         msg = {
@@ -146,7 +146,8 @@ class MQTTLink:
                 "second": now.second
             },
             "ID" : ID, 
-            "color": self.messages['senderColor']
+            "color": self.messages['senderColor'], 
+            "emoji": emojis
         }
         self.__addMessage(msg)
 
@@ -168,15 +169,17 @@ class MQTTLink:
             time.sleep(duration)
             self.rx.loop_stop()
 
+    def getTopic
+
     #network getter functions
-    def get_Color(self, user):
+    def getColor(self, user):
         #getter function to return color for a given user
         if user in self.network:
             return self.network[user]["color"]
         else:
             return "white"
             
-    def get_Emoji_Tag(self,user):
+    def getEmojiTag(self,user):
         # getter function to return emoji for a given user
         if user in self.network:
             return self.network[user]["emoji"]
