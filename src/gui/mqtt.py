@@ -43,15 +43,31 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
         
         emojis = []
         for msg in message['messages']:
-            receive.emit(msg)
+            self.receive.emit(msg)
             for emote in msg['emoji']:
                 emojis.append(emote)
-        emoji.emit(emojis)
+        self.emoji.emit(emojis)
         
     def sendMessage(self, message):
         msg = self.__parse__(message)
         self.addText(msg['data'], msg['receiver'], msg['emojis'])
         self.send()
 
-# class MQTTIMUObject(QObject, mqtt.MQTTLink):
-    
+class MQTTIMUObject(QObject, mqtt.MQTTLink):
+    gestup = pyqtSignal(bool)
+    def __init__(self, *args, parent=None, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+    def receiveMessage(self, message):
+        super().receiveMessage(message)
+        
+        for msg in message['messages']:
+            if msg["message_type"] is "gesture"
+                if msg["data"] is "up":
+                    self.gestup.emit(True)
+                elif msg["data"] is "down":
+                    self.gestup.emit(False)
+        
+
+                     
+            
