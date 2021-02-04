@@ -411,12 +411,12 @@ def runIMU(mqtt_test, reciever):
         time.sleep(0.03)
 
         if AccYangle > 60:
-            handleIMU(mqtt_test, "upward motion detected - ACCY Angle " + str(AccYangle), reciever)
+            handleIMU(mqtt_test, "up", reciever)
         elif AccYangle < -60:
-            handleIMU(mqtt_test, "downward motion detected - ACCY Angle " + str(AccYangle), reciever)
+            handleIMU(mqtt_test, "down", reciever)
 
 if __name__ == "__main__": 
     reciever = "my_name"
     user = "raspberry_controller_" + reciever
-    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture",user)
+    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture", user)
     runIMU(mqtt_test,reciever)
