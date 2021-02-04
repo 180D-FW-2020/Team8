@@ -417,5 +417,6 @@ def runIMU(mqtt_test, reciever):
 
 if __name__ == "__main__": 
     reciever = "my_name"
-    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture", "raspberry_controller_"+reciever)
+    user = "raspberry_controller_" + reciever
+    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture",user)
     runIMU(mqtt_test,reciever)
