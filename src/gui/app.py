@@ -249,3 +249,8 @@ class MainWidget(QWidget):
     def messageListenSlot(self):
         self.listener.resetCurrentPhrase()
         self.listener.sendCurrentPhrase()
+
+    def setMainLayout(self):
+        self.layout.addWidget(self.display, 0, 0, alignment=Qt.AlignCenter)
+        self.layout.addWidget(self.emote, 0, 0, alignment=Qt.AlignCenter)
+        self.setLayout(self.layout)
