@@ -145,7 +145,8 @@ class MQTTLink:
                 "minute": now.minute,
                 "second": now.second
             },
-            "ID" : ID
+            "ID" : ID, 
+            "color": self.messages['senderColor']
         }
         self.__addMessage(msg)
 
@@ -174,9 +175,10 @@ class MQTTLink:
             return self.network[user]["color"]
         else:
             return "white"
+            
     def get_Emoji_Tag(self,user):
         # getter function to return emoji for a given user
         if user in self.network:
             return self.network[user]["emoji"]
         else:
-            return 0    
+            return 0
