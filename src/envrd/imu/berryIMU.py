@@ -82,8 +82,8 @@ KFangleX = 0.0
 KFangleY = 0.0
 
 
-def handleIMU(mqtt_test, action):
-    mqtt_test.addText(action, "Siri")
+def handleIMU(mqtt_test, action, reciever):
+    mqtt_test.addGesture(action, reciever)
     mqtt_test.send()
 
 
@@ -158,7 +158,7 @@ def kalmanFilterX ( accAngle, gyroRate, DT):
 
     return KFangleX
 
-def runIMU(mqtt_test):
+def runIMU(mqtt_test, reciever):
     gyroXangle = 0.0
     gyroYangle = 0.0
     gyroZangle = 0.0
@@ -411,10 +411,12 @@ def runIMU(mqtt_test):
         time.sleep(0.03)
 
         if AccYangle > 60:
-            handleIMU(mqtt_test, "upward motion detected - ACCY Angle " + str(AccYangle))
+            handleIMU(mqtt_test, "up", reciever)
         elif AccYangle < -60:
-            handleIMU(mqtt_test, "downward motion detected - ACCY Angle " + str(AccYangle))
+            handleIMU(mqtt_test, "down", reciever)
 
 if __name__ == "__main__": 
-    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/imu")
-    runIMU(mqtt_test)
+    reciever = "my_name"
+    user = "raspberry_controller_" + reciever
+    mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture", user)
+    runIMU(mqtt_test,reciever)
