@@ -56,11 +56,11 @@ class ARChat():
                 return (message[:i], message[i+1:])
 
     def write(self):
-        self.writeMessages()
-        self.writeRooms()
+        self.write_messages()
+        self.write_rooms()
 
     # post messages to chatboard
-    def writeMessages(self):
+    def write_messages(self):
         im = cv.imread('img.jpg', 1)
         index = 0
         for message in self.messages:
@@ -71,16 +71,16 @@ class ARChat():
             index += 1
         cv.imwrite(str(self.getPath()) + '.jpg', im)
     
+    def getRooms(self, rooms):
+        return self.rooms
+
     # set rooms for chatboard placement
     def setRooms(self, rooms, index):
         self.rooms = rooms
         self.roomIndex = index
-    
-    def getRooms(self, rooms):
-        return self.rooms
 
     # post message rooms to chatboard
-    def writeRooms(self):
+    def write_rooms(self):
         im = cv.imread(str(self.getPath()) + '.jpg', 1)
         index = 0
         for room in self.rooms:
