@@ -35,11 +35,6 @@ import message_placer as placer
 import mqtt_link as mqtt
 import audio.audio as audio
 import hand_tracker.hand_tracker as hand_tracker
-# import static_homography
-# import gest_classifier
-
-for lib in PATH:
-    sys.path.remove(lib)
 
 
 DRESW = 1280 # resolution width
@@ -522,7 +517,6 @@ class MainWidget(QWidget):
         self.audio_recognizer.transcribed_phrase.connect(lambda x: self.text_board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
 
         self.text_board.board_image.connect(lambda x:self.imu_board.placeBoard(x))
-        self.text_board.board_image.connect(lambda x: self.display.setImage(x))
         # self.imu_board.board_image.connect(lambda x:self.tracker.findHand(x))
         # self.tracker.hand_image.connect(lambda x:self.display.setImage(x))
 

@@ -50,7 +50,7 @@ class MQTTLink:
             self.receiveMessage(cur)
 
 
-    def __init__(self, board, user, color = "white", emoji = "/smileyface"):
+    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface"):
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
@@ -62,8 +62,10 @@ class MQTTLink:
                         }
         self.count = 0
         self.user = user
-        self.last_recieved = {}
+        self.last_received = {}
         self.network = {}
+
+        self.listen_called = False
 
         #configure client
         # configure transmission
@@ -78,7 +80,6 @@ class MQTTLink:
         self.tx.connect_async('mqtt.eclipseprojects.io')
         self.rx.connect_async('mqtt.eclipseprojects.io')
 
-        self.listen_called = False
 
     def __del__(self):
         if self.listen_called:
@@ -101,16 +102,16 @@ class MQTTLink:
             
 
     def receiveMessage(self, message):
-        # note: there can be multiple messages )in the stack recieved
+        # note: there can be multiple messages in the stack recieved
         form_message = ''
         if message["senderID"] not in self.last_recieved:
             self.last_recieved[message["senderID"]]= []
             self.network[message["senderID"]] = {
                                                     "color":message["senderColor"],
-                                                    "emojiID": message["senderEmojiImage"]
+                                                    "emoji": message["senderEmojiImage"]
                                                 }
         for msg in message["messages"]:
-            if (msg["reciever"] == self.user or msg["reciever"] == "all") and (msg["ID"] not in self.last_recieved[message["senderID"]]):
+            if (msg["receiver"] == self.user or msg["receiver"] == "all") and (msg["ID"] not in self.last_recieved[message["senderID"]]):
                 form_message += msg['sender'] + " said: " + msg['data'] + '\n'
 
         # recieve acks
@@ -125,26 +126,28 @@ class MQTTLink:
         if form_message : 
             print(form_message)
 
-        # record message IDs
+        # record message IDss
         IDs = []
         for msg in message["messages"]:
             IDs.append(msg["ID"])
         self.last_recieved[message["senderID"]] = IDs
 
-    def addText(self, text, reciever):
+    def addText(self, text, receiver, emojis):
         now = datetime.datetime.now()
         ID = self.board + '_' + self.user + '_' + str(self.count)
         msg = {
             "message_type" : "text",
             "sender" : self.user,
-            "reciever" : reciever,
+            "receiver" : receiver,
             "data" : text,
             "time" : {
                 "hour":now.hour,
                 "minute": now.minute,
                 "second": now.second
             },
-            "ID" : ID
+            "ID" : ID, 
+            "color": self.messages['senderColor'], 
+            "emoji": emojis
         }
         self.__addMessage(msg)
 
@@ -172,7 +175,7 @@ class MQTTLink:
         self.tx.loop_stop()
 
     def listen(self, duration= -1):
-        #only listen if a reciever is initiated
+        #only listen if a receiver is initiated
         if duration == -1:
             self.rx.loop_start() # changed from loop forever so nonblocking thread
             self.listen_called = True
@@ -181,16 +184,19 @@ class MQTTLink:
             time.sleep(duration)
             self.rx.loop_stop()
 
+    def getTopic
+
     #network getter functions
-    def get_Color(self, user):
+    def getColor(self, user):
         #getter function to return color for a given user
         if user in self.network:
             return self.network[user]["color"]
         else:
             return "white"
-    def get_Emoji_Tag(self,user):
+            
+    def getEmojiTag(self,user):
         # getter function to return emoji for a given user
         if user in self.network:
-            return self.network[user]["emojiID"]
+            return self.network[user]["emoji"]
         else:
-            return "/smileyface"    
+            return 0
