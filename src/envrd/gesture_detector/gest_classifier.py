@@ -7,6 +7,7 @@
  #  
  #  @brief classifier object for gestures
  #
+ 
 import sys
 sys.path.append('../../training/classifier_training')
 from soft_SVM import soft_SVM as svm

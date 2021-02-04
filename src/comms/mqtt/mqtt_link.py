@@ -151,12 +151,27 @@ class MQTTLink:
         }
         self.__addMessage(msg)
 
+    def addGesture(self, gesture, reciever):
+        now = datetime.datetime.now()
+        ID = self.board + '_' + self.user + '_' + str(self.count)
+        msg = {
+            "message_type" : "gesutre",
+            "sender" : self.user,
+            "reciever" : reciever,
+            "data" : gesture,
+            "time" : {
+                "hour":now.hour,
+                "minute": now.minute,
+                "second": now.second
+            },
+            "ID" : ID
+        }
+        self.__addMessage(msg)
+
     def send(self):
         self.tx.loop_start()
-
         # just toss it all out there
         self.tx.publish(self.board, json.dumps(self.messages), qos=1)
-
         self.tx.loop_stop()
 
     def listen(self, duration= -1):
