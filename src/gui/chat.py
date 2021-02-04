@@ -5,7 +5,7 @@ import datetime
 
 EMPTYBOARD = {  
     "topic"     :
-    {"net"       :   mqtt.MQTTNetObject, 
+    {"net"      :   mqtt.MQTTNetObject, 
     "chat"      :   chat_image.ARChat}
             }
 
