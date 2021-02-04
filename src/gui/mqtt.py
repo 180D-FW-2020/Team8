@@ -35,7 +35,8 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
     receive = pyqtSignal(str)
     emoji = pyqtSignal(list)
     def __init__(self, *args, parent=None, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        QObject.__init__(parent)
+        mqtt.MQTTLink.__init__(*args, **kwargs)
 
     def __parse__(self, message):
         out = parse_string(message, DELIM, EMOTEIDS)
