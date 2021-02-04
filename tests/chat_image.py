@@ -76,10 +76,10 @@ class ARChat():
         index = 0
         print(self.rooms)
         for room, highlighted in self.rooms:
-            cv.putText(self.im, room, 10, self.im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
+            cv.putText(im, room, 10, im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
             if(highlighted):
-                cv.putText(self.im, room, 10, self.im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv.LINE_AA, thickness = 2)
-        cv.imwrite(str(self.getPath()) + '.jpg', self.im)
+                cv.putText(im, room, 10, im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv.LINE_AA, thickness = 2)
+        cv.imwrite(str(self.getPath()) + '.jpg', im)
 
 
 if __name__ == '__main__':
