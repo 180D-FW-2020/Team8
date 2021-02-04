@@ -57,6 +57,7 @@ class MainWidget(QWidget):
         self.display = DisplayWidget()
         self.video = TestVideo()
         self.emotebox = EmoteWidget()
+        self.popup = PopupDialog()
         self.frame_timer = QTimer(self)
         
         self.layout = QGridLayout()
@@ -70,12 +71,14 @@ class MainWidget(QWidget):
     def setMainLayout(self):
         self.layout.addWidget(self.display, 0, 0, alignment=Qt.AlignCenter)
         self.layout.addWidget(self.emotebox, 0, 0, alignment=Qt.AlignCenter)
+        self.layout.addWidget(self.popup, 0, 0, alignment=Qt.AlignCenter)
         self.setLayout(self.layout)
 
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
             self.spawn.emit([4,1,7])
+            self.popup.setHidden(not self.popup.isHidden())
 
 class testUI:
     def __init__(self):
