@@ -18,6 +18,7 @@ class GestClassifier:
         self.num_classes = num_classes
         self.num_features = num_features
         self.classifier.W = [np.loadtxt(coeficcient_weights_file)]
+        self.classifier.W = self.classifier.W[0:num_features]
         self.classifier.w = [np.loadtxt(bias_weight_file)]
         self.classifier.train(None, None, backdoor=True)
         self.gest_names = gest_names
