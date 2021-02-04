@@ -180,7 +180,7 @@ class MainWidget(QWidget):
         self.layout = QGridLayout()
         self.setMainLayout()
 
-        self.signals = self.signals.index(4, self.listener.transcribed_phrase)
+        self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
