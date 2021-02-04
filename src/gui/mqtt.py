@@ -52,3 +52,6 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
         msg = self.__parse__(message)
         self.addText(msg['data'], msg['receiver'], msg['emojis'])
         self.send()
+
+# class MQTTIMUObject(QObject, mqtt.MQTTLink):
+    
