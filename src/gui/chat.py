@@ -47,7 +47,6 @@ class BoardManager(QObject):
         
 
     def createBoard(self, topic:str):
-
         new_board = { topic     :
                         {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
@@ -55,7 +54,6 @@ class BoardManager(QObject):
             "chat"      :   chat_image.ARChat(self.root)
             }} 
         self.boards.append(new_board)
-
         new_board["net"].receive.connect(lambda x: self.receivePost(topic, x))
 
 
