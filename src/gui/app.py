@@ -176,6 +176,8 @@ class MainWidget(QWidget):
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
+        
+        self.layout = QGridLayout()
         self.setMainLayout()
 
         self.signals = self.signals.index(4, self.listener.transcribed_phrase)
