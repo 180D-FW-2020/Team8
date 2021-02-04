@@ -104,11 +104,6 @@ class DisplayWidget(QWidget):
         image = image.rgbSwapped()
         return image
 
-    # TODO
-    # should take member masks 
-    def processMasks():
-        pass
-
     # @desc 
     # sets the widget's QImage object, used as a slot for receiving the image_data signal
     def setImage(self, image):
@@ -118,20 +113,9 @@ class DisplayWidget(QWidget):
         # print(self.image.size())
         self.update()
 
-    #### IMAGE PROCESSING SLOTS ####
-    # TODO
-    def setHomographyMask(self, layer):
-        pass
-
-    # TODO
-    def setHandTrackMask(self, layer):
-        pass
-
     #### MISC SLOTS ####
     def keyphrasehandler(self, phrase):
         print("FOUND: " + phrase)
-
-    ####
 
     # @desc
     # handler for Qt's paint event, draws the QImage object on screen
