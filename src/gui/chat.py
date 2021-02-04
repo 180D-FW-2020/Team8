@@ -10,16 +10,19 @@ EMPTYBOARD = {
 
 class BoardManager(QObject):
     update = pyqtSignal(np.ndarray)
-    def __init__(self, parent=None):
+    def __init__(self, user, parent=None):
         super().__init__(parent)
-        self.boards = []
-        self.topic = ''
 
-    
+        self.boards = [{
+            "topic" :   "general",
+            "net"   :   mqtt.MQTTNetObject('ece180d/MEAT/general', user, 
+                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
+            "chat"  :   chat_image.ARChat()
+        }]
+        self.topic = "general"
 
     def createBoard(self, **kwargs):
         # to add: implement check that asserts board follows types
-        board = EMPTYBOARD
         for kw in kwargs:
             board[kw] = kwargs[kw]
         self.boards.append(board)
