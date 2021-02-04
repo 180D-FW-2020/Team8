@@ -5,6 +5,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import time
 import sys
+sys.path.append('../')
+from envrd.audio.audio import *
 
 MAXTIME = 3000
 
@@ -39,9 +41,11 @@ class DummyObject(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        phrase = {'testing': False}
+        self.r = SpeechRecognizer(phrase)
+
     def doStuff(self):
-        time.sleep(1)
-        print("worker finished...")
+        self.r.listenForPhrases()
 
 
 class TimedButton(QPushButton):
@@ -82,6 +86,7 @@ class MainWidget(QWidget):
 
         self.b1 = TimedButton()
         self.dummy = DummyObject()
+
         self.p = QProgressBar(minimum=0,maximum=MAXTIME)
         self.threadpool = QThreadPool()
 
@@ -172,9 +177,11 @@ class MainWidget(QWidget):
     #       If you want the slot to execute on state transition AND main thread is not busy
     #       during transition, then use the commented line
     def worker_state2(self):
-        worker = JobRunner(self.dummy.doStuff)
-        # worker.signals.done.connect(lambda: print("worker finished..."))
-        self.threadpool.start(worker)
+        if self.threadpool.activeThreadCount() < 1:
+            worker = JobRunner(self.dummy.doStuff)
+            func = lambda: print("worker finished...")
+            worker.signals.done.connect(func)
+            self.threadpool.start(worker)
 
 
 if __name__ == '__main__':
