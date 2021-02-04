@@ -23,18 +23,17 @@ class FSM:
 
         # signals, slots, and transitions
         self.s_init.entered.connect(slots[0]) # hide chatbox
-        self.s_main.entered.connect(slots[1]) # display chatbox
-        self.s_msg_listen.entered.connect(slots[2]) # message listen worker
-        self.s_msg_send.entered.connect(slots[3]) # send message
+        self.s_main.entered.connect(slots[0]) # display chatbox
+        self.s_msg_listen.entered.connect(slots[1]) # message listen worker
+        # self.s_msg_send.entered.connect(slots[2]) # send message
 
         self.s_init.addTransition(signals[0], self.s_main) # 'start chatbox' displays chatbox
         self.s_main.addTransition(signals[1], self.s_msg) # 'send message' enters s_msg_listen
         self.s_main.addTransition(signals[2], self.s_init) # 'close chatbox' hides chatbox
         self.s_msg.addTransition(signals[3], self.s_main) # 'cancel message' backs out of s_msg at any substate
-        self.s_msg_listen.addTransition(signals[4], self.s_msg_confirm) # wait until current phrase changes
-        self.s_msg_confirm.addTransition(signals[5], self.s_msg_send) # 'yes' sends msg
-        self.s_msg_confirm.addTransition(signals[6], self.s_msg_listen) # 'no' returns to listen
-        self.s_msg_send.addTransition(self.s_main) # unconditional transition back to main
+        self.s_msg_listen.addTransition(signals[4], self.s_main) # wait until current phrase changes
+        # self.s_msg_confirm.addTransition(signals[5], self.s_msg_send) # 'yes' sends msg
+        # self.s_msg_confirm.addTransition(signals[6], self.s_msg_listen) # 'no' returns to listen
 
     def __phrase_option_handler__(self, state, handler):
         # when a new state is entered, connect the detect_phrase signal in the audio recognizer to the handler

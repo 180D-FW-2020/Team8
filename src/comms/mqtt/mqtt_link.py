@@ -169,8 +169,6 @@ class MQTTLink:
             time.sleep(duration)
             self.rx.loop_stop()
 
-    def getTopic
-
     #network getter functions
     def getColor(self, user):
         #getter function to return color for a given user

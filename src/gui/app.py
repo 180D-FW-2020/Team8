@@ -10,10 +10,11 @@ PATH = [
         # '../training/classifier_training',
         # '../video_embedder',
         # '../static_ar_exploration',
-        '../comms/mqtt',
-        '../envrd',
-        '../imgproc',
-        '../../data/gui'
+        'src/comms/mqtt',
+        'src/envrd',
+        'src/imgproc',
+        'src/gui'
+        'data/gui'
        ]
 
 import sys
@@ -31,12 +32,12 @@ import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-import message_placer as placer
-import hand_tracker.hand_tracker as hand_tracker
 
 # implementations with out modules
-import mqtt 
-import speech
+import mqtt as mqtt 
+import speech as speech
+import chat as chat 
+import animations as animations
 
 
 DRESW = 1280 # resolution width
@@ -45,6 +46,8 @@ DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
 DINTERVAL = round(1000/DRATE) # frame refresh interval (msec)
+TOPICS = ["Nate", "Tommy", "Michael", "Nico"]
+PHRASES = ["place", "message", "return", "cancel"] 
 
 ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 
@@ -136,7 +139,7 @@ class ThreadVideo(QObject):
         # self.cap.set(cv.CAP_PROP_FPS, 30)
         self.buffer = Queue.Queue()
 
-    def capture_frames(self):
+    def captureFrames(self):
         while(1):
             read, frame = self.cap.read()
             if read:
@@ -151,32 +154,98 @@ class ThreadVideo(QObject):
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
 class MainWidget(QWidget):
+    yesSignal = pyqtSignal()
+    noSignal = pyqtSignal()
+    placeSignal = pyqtSignal()
+    cancelSignal = pyqtSignal()
+    returnSignal = pyqtSignal()
+    messageSignal = pyqtSignal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.signals = [placeSignal, messageSignal, returnSignal, cancelSignal]
+        self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
+        self.homographyIsActive = False
+
+        self.timer = QTimer(self)
+
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = BoardManager(user='Nico')
-        self.audio_phrases = {}
-        self.listener = AudioObject(self.audio_phrases)
+        self.manager = chat.BoardManager(user='Nico')
+        self.overlay = chat.BoardOverlay()
+        self.emote = animations.EmoteWidget()
+        self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
         self.setMainLayout()
 
+        self.signals = self.signals.index(4, self.listener.transcribed_phrase)
+        self.slots = [self.toggleHomography, self.messageListenSlot]
+
+        self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
+
+        # create all relevant chats
+        for topic in TOPICS:
+            self.manager.createBoard(topic)
+
+        self.__constant_workers__()
+        self.__internal_connect__()
+
         # signal creation for states with keyphrases
-        phrases = [["place"], ["message"], ["yes", "no"]]
         for state, phrases in states_with_phrases.items():
             self._setStatePhrases(state, phrases)
 
-        self.audio_recognizer.transcribed_phrase.connect(lambda x: self.text_board.confirmUserMessage(x)) # when a phrase is transcribed, board gets it
-        self.audio_recognizer.detected_phrase.connect(lambda x: self.display.keyphrasehandler(x))
+        self.fsm = FSM()
 
-        self.sm = BoardFSM()
+    def __internal_connect__(self):
+        # manager -> overlay
+        self.manager.topic.connect(lambda topic: self.overlay.changeTopic(topic))
+
+        # display
+        for board in BoardManager.boards.values():
+            board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
+
+        self.fsm(self.signals, self.slots)
+        
+        
 
     def __create_worker__(self, func):
         worker = JobRunner(func)
         self.threadpool.start(worker)
 
+    def __constant_workers__(self):
+        self.__create_worker__(self.video.captureFrames)
+        self.timer.start(DINTERVAL)
+
+        self.__create_worker__(self.listener.speechHandler)
+        self.__create_worker__(self.listener.receivePhrase)
+        for board in BoardManager.boards.values():
+            self.__create_worker__(board["net"].listen)
+
+    def __phrase_rec__(self, phrase):
+        if phrase in PHRASES:
+            self.phrases[phrase].emit()
+
+    def __imgpass__(self, imqueue):
+        if not imqueue.empty():
+            img = imqueue.get()
+            if img is not None and len(img) > 0:
+                if self.homographyIsActive:
+                    self.frame_data.emit(self.overlay.run(img))
+                else:
+                    self.frame_data.emit(img)
+
+    def __print_state__(self, state, sID):
+        state.entered.connect(lambda: print("current state: " + str(sID)))
+
+    def __print_phrases__(self):
+        while(1):
+            time.sleep(1)
+            print(self.audio_recognizer.phrases)
+
+    def toggleHomography(self):
+        self.homographyIsActive = not self.homographyIsActive
+
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
-        self.audio_recognizer.resetCurrentPhrase()
-        self.audio_recognizer.sendCurrentPhrase()
+        self.listener.resetCurrentPhrase()
+        self.listener.sendCurrentPhrase()

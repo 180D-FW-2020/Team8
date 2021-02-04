@@ -1,7 +1,10 @@
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-import audio.audio as audio
+import sys
+
+sys.path.append("src/envrd")
+import audio
 
 class AudioObject(QObject, audio.SpeechRecognizer):
     detected_phrase = pyqtSignal(str)
@@ -22,7 +25,7 @@ class AudioObject(QObject, audio.SpeechRecognizer):
         while True:
             time.sleep(0.5)
             try:
-                for phrase, found in self.phrases.items():
+                for phrase, found in self.phrases():
                     if found == True:
                         self.resetDetection(phrase)
                         self.detected_phrase.emit(phrase)

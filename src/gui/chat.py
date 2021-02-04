@@ -11,8 +11,7 @@ EMPTYBOARD = {
             }
 
 class BoardManager(QObject):
-    update = pyqtSignal()
-    changetopic = pyqtSignal(str)
+    topic = pyqtSignal(str)
     def __init__(self, user, parent=None):
         super().__init__(parent)
 
@@ -22,7 +21,7 @@ class BoardManager(QObject):
         self.boards = {"general": 
             {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + "general", user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
+                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
             "chat"      :   chat_image.ARChat()
             }
         }
@@ -31,14 +30,14 @@ class BoardManager(QObject):
         self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
         
 
-    def createBoard(self, topic:str, net:mqtt.MQTTNetObject, chat:chat_image.ARChat):
+    def createBoard(self, topic:str):
         
         net.receive.connect(lambda x: self.receivePost(topic, x))
 
         new_board = { topic     :
                         {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
+                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
             "chat"      :   chat_image.ARChat()
             }} 
         self.boards.append(new_board)
@@ -58,8 +57,7 @@ class BoardManager(QObject):
                 self.topic = keys[len(keys)-1]
 
         boards[self.topic]["chat"].write()
-        self.changetopic.emit(self.topic)
-        self.update.emit()
+        self.topic.emit(self.topic)
 
     def userPost(self, message):
         board = self.boards[self.topic]
@@ -76,7 +74,6 @@ class BoardManager(QObject):
 
         board["chat"].queue(user, message, color, time)
         board["chat"].write()
-        self.update.emit()
 
     def receivePost(self, topic, message):
         board = self.boards[topic]
@@ -87,9 +84,9 @@ class BoardManager(QObject):
 
         if self.topic is topic:
             board["chat"].write()
-            self.update.emit()
 
 class BoardOverlay(QOjbect):
+    board = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = cv.imread('../../data/gui/model_qr.png')
@@ -156,5 +153,4 @@ class BoardOverlay(QOjbect):
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
 
-    def run(self, image):
     

@@ -2,6 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import json
+import sys
 
 EMOTEIDS = {
     ":/emotes/angry"        : 1 ,
@@ -23,6 +24,9 @@ EMOTEIDS = {
 }
 
 DELIM = "slash"
+
+sys.path.append("src/comms/mqtt")
+sys.path.append("src/gui")
 
 import mqtt_link as mqtt
 import stringparser
@@ -62,7 +66,7 @@ class MQTTIMUObject(QObject, mqtt.MQTTLink):
         super().receiveMessage(message)
         
         for msg in message['messages']:
-            if msg["message_type"] is "gesture"
+            if msg["message_type"] is "gesture":
                 if msg["data"] is "up":
                     self.gestup.emit(True)
                 elif msg["data"] is "down":
