@@ -47,8 +47,6 @@ class BoardManager(QObject):
         
 
     def createBoard(self, topic:str):
-        
-        net.receive.connect(lambda x: self.receivePost(topic, x))
 
         new_board = { topic     :
                         {
@@ -57,6 +55,9 @@ class BoardManager(QObject):
             "chat"      :   chat_image.ARChat(self.root)
             }} 
         self.boards.append(new_board)
+
+        new_board["net"].receive.connect(lambda x: self.receivePost(topic, x))
+
 
     def switchTopic(self, forward):
         keys = self.boards.keys()
