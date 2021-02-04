@@ -1,8 +1,23 @@
+import sys
+
+PATH = [
+    "src/gui",
+    "test"
+]
+
+for lib in PATH:
+    sys.path.append(lib)
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+import cv2 as cv
+
 import mqtt
 import chat_image
 import numpy as np
 import datetime
-import os
+
 
 EMPTYBOARD = {  
     "topic"     :
@@ -15,18 +30,19 @@ class BoardManager(QObject):
     def __init__(self, user, parent=None):
         super().__init__(parent)
 
+        self.root = "./data/gui/chat.jpg"
         self.topic_prefix = "ece180d/MEAT/"
         self.user = user
         self.topic = "general"
         self.boards = {"general": 
             {
-            "net"       :   mqtt.MQTTNetObject(self.topic_prefix + "general", user, 
+            "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
-            "chat"      :   chat_image.ARChat()
+            "chat"      :   chat_image.ARChat(self.root)
             }
         }
 
-        self.gesturer = mqtt.MQTTIMUObject(self.topic_prefix + "general/gesture", user)
+        self.gesturer = mqtt.MQTTIMUObject(board = self.topic_prefix + "general/gesture", user = user)
         self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
         
 
@@ -38,7 +54,7 @@ class BoardManager(QObject):
                         {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
-            "chat"      :   chat_image.ARChat()
+            "chat"      :   chat_image.ARChat(self.root)
             }} 
         self.boards.append(new_board)
 
@@ -85,7 +101,7 @@ class BoardManager(QObject):
         if self.topic is topic:
             board["chat"].write()
 
-class BoardOverlay(QOjbect):
+class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)

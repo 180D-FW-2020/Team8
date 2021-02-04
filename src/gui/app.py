@@ -164,7 +164,7 @@ class MainWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.signals = [placeSignal, messageSignal, returnSignal, cancelSignal]
+        self.signals = [self.placeSignal, self.messageSignal, self.returnSignal, self.cancelSignal]
         self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
         self.homographyIsActive = False
 
