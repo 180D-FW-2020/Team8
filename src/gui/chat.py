@@ -2,6 +2,7 @@ import mqtt
 import chat_image
 import numpy as np
 import datetime
+import os
 
 EMPTYBOARD = {  
     "topic"     :
@@ -10,19 +11,23 @@ EMPTYBOARD = {
             }
 
 class BoardManager(QObject):
+    update = pyqtSignal()
+    changetopic = pyqtSignal(str)
     def __init__(self, user, parent=None):
         super().__init__(parent)
 
-        self.topic = "ece180d/MEAT/general"
-        self.boards = {"ece180d/MEAT/general": 
+        self.topic_prefix = "ece180d/MEAT/"
+        self.user = user
+        self.topic = "general"
+        self.boards = {"general": 
             {
-            "net"       :   mqtt.MQTTNetObject("ece180d/MEAT/general", user, 
+            "net"       :   mqtt.MQTTNetObject(self.topic_prefix + "general", user, 
                                 color = (np.random.rand(), np.random.rand(), np.random.rand()))
             "chat"      :   chat_image.ARChat()
             }
         }
 
-        self.gesturer = mqtt.MQTTIMUObject("ece180d/MEAT/general/gesture", user)
+        self.gesturer = mqtt.MQTTIMUObject(self.topic_prefix + "general/gesture", user)
         self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
         
 
@@ -30,9 +35,12 @@ class BoardManager(QObject):
         
         net.receive.connect(lambda x: self.receivePost(topic, x))
 
-        new_board = { board     :
-                        {"net"   :   net,    
-                         "chat"  :   chat}} 
+        new_board = { topic     :
+                        {
+            "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
+                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
+            "chat"      :   chat_image.ARChat()
+            }} 
         self.boards.append(new_board)
 
     def switchTopic(self, forward):
@@ -50,6 +58,8 @@ class BoardManager(QObject):
                 self.topic = keys[len(keys)-1]
 
         boards[self.topic]["chat"].write()
+        self.changetopic.emit(self.topic)
+        self.update.emit()
 
     def userPost(self, message):
         board = self.boards[self.topic]
@@ -66,6 +76,7 @@ class BoardManager(QObject):
 
         board["chat"].queue(user, message, color, time)
         board["chat"].write()
+        self.update.emit()
 
     def receivePost(self, topic, message):
         board = self.boards[topic]
@@ -76,36 +87,74 @@ class BoardManager(QObject):
 
         if self.topic is topic:
             board["chat"].write()
+            self.update.emit()
 
+class BoardOverlay(QOjbect):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.model = cv.imread('../../data/gui/model_qr.png')
+        self.overlay = cv.imread('path/to/original/overlay')
+        self.topic = "general"
+        self.board_root = "path"
 
-class BoardFSM:
-    def __init__(self, signals, slots):
-        self.state_machine = QStateMachine()
+    def changeTopic(self, topic):
+        self.topic = topic
+        self.overlay = cv.imread(os.path.join(self.board_root, self.topic))
 
-        self.s_init = QState() # board not visible
-        self.s_main = QState() # board becomes visible here
-        self.s_msg = QState()
-        self.s_msg_listen = QState(self.s_msg)
-        self.s_msg_confirm = QState(self.s_msg)
-        self.s_msg_send = QState(self.s_msg)
-        self.s_msg.setInitialState(self.s_msg_listen)
+    def run(self, image):
+        overlay = cv.imread(self.board_root + self.topic)
+        height, width, c = self.model.shape
 
-        self.state_machine.addState(self.s_init)
-        self.state_machine.addState(self.s_main)
-        self.state_machine.addState(self.s_msg)
-        self.state_machine.setInitialState(self.s_init)
+        orb = cv.ORB_create(nfeatures=1000)
+        kp1, des1 = orb.detectAndCompute(self.model, None) 
 
-        # signals, slots, and transitions
-        self.s_init.entered.connect(slots[0]) # hide chatbox
-        self.s_main.entered.connect(slots[1]) # display chatbox
-        self.s_msg_listen.entered.connect(slots[2]) # message listen worker
-        self.s_msg_send.entered.connect(slots[3]) # send message
+        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
+        augmentedimage = cameraimage.copy()
 
-        self.s_init.addTransition(signals[0], self.s_main) # 'start chatbox' displays chatbox
-        self.s_main.addTransition(signals[1], self.s_msg) # 'send message' enters s_msg_listen
-        self.s_main.addTransition(signals[2], self.s_init) # 'close chatbox' hides chatbox
-        self.s_msg.addTransition(signals[3], self.s_main) # 'cancel message' backs out of s_msg at any substate
-        self.s_msg_listen.addTransition(signals[4], self.s_msg_confirm) # wait until current phrase changes
-        self.s_msg_confirm.addTransition(signals[5], self.s_msg_send) # 'yes' sends msg
-        self.s_msg_confirm.addTransition(signals[6], self.s_msg_listen) # 'no' returns to listen
-        self.s_msg_send.addTransition(self.s_main) # unconditional transition back to main
+        kp2, des2 = orb.detectAndCompute(image, None)
+        matches = self.__match__(des1, des2)
+        # print(len(matches))
+
+        if len(matches) > 250:
+            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
+        return image
+
+    # generates matches between two image descriptors
+    # @param
+    # des1: model image descriptors
+    # des2: camera image descriptors
+    def __match__(self, des1, des2):
+        bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+        matches = bf.match(des1, des2)
+        matches = sorted(matches, key=lambda x: x.distance)
+        return matches
+        
+    # does video embed in camera image
+    # @param
+    # cameraimage: cap.read() camera image
+    # overlayimage: overlay image
+    # kp1: model keypoints
+    # kp2: camera image keypoints
+    # matches: BFMatcher between model and camera image descriptors
+    # augmentedimage: camera feed with video overlay
+    # height: height of mask
+    # width: width of mask
+    def __embed__(self, cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width):
+        srcpts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+        dstpts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+        matrix, mask = cv.findHomography(srcpts, dstpts, cv.RANSAC, 5)
+
+        points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
+        dst = cv.perspectiveTransform(points, matrix)
+        
+        warpedimage = cv.warpPerspective(overlayimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
+
+        newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
+        cv.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))
+        invertedmask = cv.bitwise_not(newmask)
+        augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
+        augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
+        return augmentedimage
+
+    def run(self, image):
+    
