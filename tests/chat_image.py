@@ -131,4 +131,3 @@ if __name__ == '__main__':
 
     chat2.setRooms(masterRooms, 1)
     chat2.write()
-
