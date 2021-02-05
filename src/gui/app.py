@@ -154,7 +154,7 @@ class ThreadVideo(QObject):
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
 class MainWidget(QWidget):
-    frameSignal = pyqtSignal()
+    frameSignal = pyqtSignal(np.ndarray)
     yesSignal = pyqtSignal()
     noSignal = pyqtSignal()
     placeSignal = pyqtSignal()
@@ -232,9 +232,6 @@ class MainWidget(QWidget):
                     self.frameSignal.emit(self.overlay.run(img))
                 else:
                     self.frameSignal.emit(img)
-
-    def __print_state__(self, state, sID):
-        state.entered.connect(lambda: print("current state: " + str(sID)))
 
     def __print_phrases__(self):
         while(1):

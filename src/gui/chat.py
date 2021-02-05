@@ -30,7 +30,7 @@ class BoardManager(QObject):
     def __init__(self, user, parent=None):
         super().__init__(parent)
 
-        self.root = "./data/gui/chat.jpg"
+        self.root = "./data/gui/"
         self.topic_prefix = "ece180d/MEAT/"
         self.user = user
         self.topic = "general"
@@ -38,7 +38,7 @@ class BoardManager(QObject):
             {
             "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
-            "chat"      :   chat_image.ARChat(self.root)
+            "chat"      :   chat_image.ARChat(self.root + self.topic)
             }
         }
 
@@ -49,7 +49,7 @@ class BoardManager(QObject):
         self.boards[topic] = {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
-            "chat"      :   chat_image.ARChat(self.root)
+            "chat"      :   chat_image.ARChat(self.root + topic)
             }
         self.boards[topic]["net"].receive.connect(lambda x: self.receivePost(topic, x))
 
@@ -101,10 +101,10 @@ class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.model = cv.imread('../../data/gui/model_qr.png')
-        self.overlay = cv.imread('path/to/original/overlay')
+        self.model = cv.imread('data/gui/model_qr.png')
+        self.overlay = cv.imread('data/gui/general.jpg')
         self.topic = "general"
-        self.board_root = "path"
+        self.board_root = "data/gui/"
 
     def changeTopic(self, topic):
         self.topic = topic
@@ -118,7 +118,7 @@ class BoardOverlay(QObject):
         kp1, des1 = orb.detectAndCompute(self.model, None) 
 
         overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = cameraimage.copy()
+        augmentedimage = image.copy()
 
         kp2, des2 = orb.detectAndCompute(image, None)
         matches = self.__match__(des1, des2)

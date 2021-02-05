@@ -41,3 +41,6 @@ class FSM:
         # when that state is exited, this is removed
         confirm_teardown = lambda val=handler: self.detect.disconnect(val)
         state.exited.connect(confirm_teardown)
+
+    def __print_state__(self, state, sID):
+        state.entered.connect(lambda: print("current state: " + str(sID)))
