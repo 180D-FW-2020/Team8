@@ -179,6 +179,7 @@ class MainWidget(QWidget):
         
         self.layout = QGridLayout()
         self.setMainLayout()
+        self.threadpool = QThreadPool()
 
         self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
@@ -220,7 +221,7 @@ class MainWidget(QWidget):
 
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.listener.receivePhrase)
-        for board in BoardManager.boards.values():
+        for board in self.manager.boards.values():
             self.__create_worker__(board["net"].listen)
 
     def __phrase_rec__(self, phrase):
