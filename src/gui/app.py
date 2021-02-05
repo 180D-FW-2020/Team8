@@ -154,6 +154,7 @@ class ThreadVideo(QObject):
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 # also handles threading
 class MainWidget(QWidget):
+    frameSignal = pyqtSignal()
     yesSignal = pyqtSignal()
     noSignal = pyqtSignal()
     placeSignal = pyqtSignal()
@@ -187,7 +188,8 @@ class MainWidget(QWidget):
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
         self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
-        self.frame_timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
+        self.timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
+        self.frameSignal.connect(lambda image: self.display.setImage(image))
 
         # create all relevant chats
         for topic in TOPICS:
@@ -227,9 +229,9 @@ class MainWidget(QWidget):
             img = imqueue.get()
             if img is not None and len(img) > 0:
                 if self.homographyIsActive:
-                    self.frame_data.emit(self.overlay.run(img))
+                    self.frameSignal.emit(self.overlay.run(img))
                 else:
-                    self.frame_data.emit(img)
+                    self.frameSignal.emit(img)
 
     def __print_state__(self, state, sID):
         state.entered.connect(lambda: print("current state: " + str(sID)))
