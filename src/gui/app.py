@@ -191,6 +191,7 @@ class MainWidget(QWidget):
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
         self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
+        self.frame_timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
 
         # create all relevant chats
         for topic in TOPICS:
@@ -198,10 +199,6 @@ class MainWidget(QWidget):
 
         self.__constant_workers__()
         self.__internal_connect__()
-
-        # signal creation for states with keyphrases
-        for state, phrases in states_with_phrases.items():
-            self._setStatePhrases(state, phrases)
 
     def __internal_connect__(self):
         # manager -> overlay
