@@ -35,8 +35,8 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
     receive = pyqtSignal(str)
     emoji = pyqtSignal(list)
     def __init__(self, board, user, color=(0, 0, 0), emoji=None, parent=None):
-        super(mqtt.MQTTLink, self).__init__(board=board, user=user, color=color, emoji=emoji)
-        super(QObject, self).__init__(parent)
+        mqtt.MQTTLink.__init__(board, user, color=color, emoji=emoji)
+        QObject.__init__(parent)
 
     def __parse__(self, message):
         out = parse_string(message, DELIM, EMOTEIDS)
@@ -61,8 +61,8 @@ class MQTTNetObject(QObject, mqtt.MQTTLink):
 class MQTTIMUObject(QObject, mqtt.MQTTLink):
     gestup = pyqtSignal(bool)
     def __init__(self, board, user, color=(0, 0, 0), emoji=None, parent=None):
-        super(mqtt.MQTTLink, self).__init__(board=board, user=user, color=color, emoji=emoji)
-        super(QObject, self).__init__(parent)
+        mqtt.MQTTLink.__init__(board, user, color=color, emoji=emoji)
+        QObject.__init__(parent)
 
     def receiveMessage(self, message):
         super().receiveMessage(message)
