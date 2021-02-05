@@ -3,8 +3,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 class FSM:
-    def __init__(self, phrase_signal, slots):
-        self.detect = phrase_signal
+    def __init__(self, signals, slots):
+        self.detect = signals
 
         self.state_machine = QStateMachine()
 

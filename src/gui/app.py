@@ -38,6 +38,7 @@ import mqtt as mqtt
 import speech as speech
 import chat as chat 
 import animations as animations
+from fsm import *
 
 
 DRESW = 1280 # resolution width
@@ -176,13 +177,14 @@ class MainWidget(QWidget):
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        
+
         self.layout = QGridLayout()
         self.setMainLayout()
         self.threadpool = QThreadPool()
 
         self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
+        self.fsm = FSM(self.signals, self.slots)
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
 
@@ -197,8 +199,6 @@ class MainWidget(QWidget):
         for state, phrases in states_with_phrases.items():
             self._setStatePhrases(state, phrases)
 
-        self.fsm = FSM()
-
     def __internal_connect__(self):
         # manager -> overlay
         self.manager.update.connect(lambda topic: self.overlay.changeTopic(topic))
@@ -206,11 +206,8 @@ class MainWidget(QWidget):
         # display
         for board in self.manager.boards.values():
             board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
-
-        self.fsm(self.signals, self.slots)
         
         
-
     def __create_worker__(self, func):
         worker = JobRunner(func)
         self.threadpool.start(worker)
