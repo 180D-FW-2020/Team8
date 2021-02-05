@@ -1,3 +1,7 @@
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 ######################################
 # File Name : mqtt_message
 #
@@ -15,7 +19,7 @@ import datetime
 import queue
 
 
-class MQTTLink:
+class MQTTLink(QObject):
 
     # MQTT client functions
     def __on_connect_subscriber(self, client, userdata, flags, rc):
@@ -50,7 +54,8 @@ class MQTTLink:
             self.receiveMessage(cur)
 
 
-    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface"):
+    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface", parent=None):
+        super().__init__(parent)
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
