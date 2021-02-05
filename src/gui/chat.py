@@ -44,7 +44,6 @@ class BoardManager(QObject):
 
         self.gesturer = mqtt.MQTTIMUObject(board = self.topic_prefix + "general/gesture", user = user)
         self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
-        
 
     def createBoard(self, topic:str):
         self.boards[topic] = {
@@ -52,7 +51,7 @@ class BoardManager(QObject):
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
             "chat"      :   chat_image.ARChat(self.root)
             }
-        new_board["net"].receive.connect(lambda x: self.receivePost(topic, x))
+        self.boards[topic]["net"].receive.connect(lambda x: self.receivePost(topic, x))
 
 
     def switchTopic(self, forward):
