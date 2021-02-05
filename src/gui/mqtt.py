@@ -1,3 +1,8 @@
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+
 import json
 import sys
 
@@ -32,7 +37,7 @@ class MQTTNetObject(mqtt.MQTTLink):
     receive = pyqtSignal(str)
     emoji = pyqtSignal(list)
     def __init__(self, board, user, color=(0, 0, 0), emoji=None, parent=None):
-        super().__init__(self, board, user, color=color, emoji=emoji)
+        super().__init__(self, board, user, color=color, emoji=emoji, parent=parent)
 
     def __parse__(self, message):
         out = parse_string(message, DELIM, EMOTEID)

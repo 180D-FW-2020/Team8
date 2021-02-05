@@ -1,7 +1,4 @@
 
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
 ######################################
 # File Name : mqtt_message
 #
@@ -17,6 +14,10 @@ import paho.mqtt.client as mqtt
 import time
 import datetime
 import queue
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 
 class MQTTLink(QObject):
