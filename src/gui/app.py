@@ -199,13 +199,9 @@ class MainWidget(QWidget):
         self.__constant_workers__()
         self.__internal_connect__()
 
-<<<<<<< HEAD
-        self.fsm = FSM(self.signals, self.slots)
-=======
         # signal creation for states with keyphrases
         for state, phrases in states_with_phrases.items():
             self._setStatePhrases(state, phrases)
->>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
 
     def __internal_connect__(self):
         # manager -> overlay
@@ -214,12 +210,8 @@ class MainWidget(QWidget):
         # display
         for board in self.manager.boards.values():
             board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
-<<<<<<< HEAD
-
-=======
         
         
->>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
     def __create_worker__(self, func):
         worker = JobRunner(func)
         self.threadpool.start(worker)
