@@ -33,6 +33,18 @@ class FSM:
         # self.s_msg_confirm.addTransition(signals[5], self.s_msg_send) # 'yes' sends msg
         # self.s_msg_confirm.addTransition(signals[6], self.s_msg_listen) # 'no' returns to listen
 
+        # put states into a dict and create IDs for them
+        states_and_IDs = {
+                            self.s_init: 1,
+                            self.s_main: 2,
+                            self.s_msg: 3
+                        }
+        for state, sID in states_and_IDs.items():
+            self._print_current_state(state, sID)
+
+    def _print_current_state(self, state, sID):
+        state.entered.connect(lambda: print("current state: " + str(sID)))
+
     def __phrase_option_handler__(self, state, handler):
         # when a new state is entered, connect the detect_phrase signal in the audio recognizer to the handler
         confirm_handle = lambda val=handler: self.detect.connect(val)
