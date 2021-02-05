@@ -39,6 +39,10 @@ import speech as speech
 import chat as chat 
 import animations as animations
 from fsm import *
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
 
 DRESW = 1280 # resolution width
 DRESH = 720 # res height
@@ -176,13 +180,14 @@ class MainWidget(QWidget):
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        
+
         self.layout = QGridLayout()
         self.setMainLayout()
         self.threadpool = QThreadPool()
 
         self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
+        self.fsm = FSM(self.signals, self.slots)
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
         self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
@@ -194,7 +199,13 @@ class MainWidget(QWidget):
         self.__constant_workers__()
         self.__internal_connect__()
 
+<<<<<<< HEAD
         self.fsm = FSM(self.signals, self.slots)
+=======
+        # signal creation for states with keyphrases
+        for state, phrases in states_with_phrases.items():
+            self._setStatePhrases(state, phrases)
+>>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
 
     def __internal_connect__(self):
         # manager -> overlay
@@ -203,7 +214,12 @@ class MainWidget(QWidget):
         # display
         for board in self.manager.boards.values():
             board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
+<<<<<<< HEAD
 
+=======
+        
+        
+>>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
     def __create_worker__(self, func):
         worker = JobRunner(func)
         self.threadpool.start(worker)

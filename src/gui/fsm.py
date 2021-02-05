@@ -4,6 +4,11 @@ from PyQt5.QtWidgets import *
 
 class FSM:
     def __init__(self, signals, slots):
+<<<<<<< HEAD
+=======
+        self.detect = signals
+
+>>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
         self.state_machine = QStateMachine()
 
         self.s_init = QState() # board not visible
