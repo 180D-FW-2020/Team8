@@ -38,7 +38,7 @@ import mqtt as mqtt
 import speech as speech
 import chat as chat 
 import animations as animations
-
+from fsm import *
 
 DRESW = 1280 # resolution width
 DRESH = 720 # res height
@@ -185,6 +185,7 @@ class MainWidget(QWidget):
         self.slots = [self.toggleHomography, self.messageListenSlot]
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
+        self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
 
         # create all relevant chats
         for topic in TOPICS:
@@ -193,11 +194,7 @@ class MainWidget(QWidget):
         self.__constant_workers__()
         self.__internal_connect__()
 
-        # signal creation for states with keyphrases
-        for state, phrases in states_with_phrases.items():
-            self._setStatePhrases(state, phrases)
-
-        self.fsm = FSM()
+        self.fsm = FSM(self.signals, self.slots)
 
     def __internal_connect__(self):
         # manager -> overlay
@@ -206,10 +203,6 @@ class MainWidget(QWidget):
         # display
         for board in self.manager.boards.values():
             board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
-
-        self.fsm(self.signals, self.slots)
-        
-        
 
     def __create_worker__(self, func):
         worker = JobRunner(func)
