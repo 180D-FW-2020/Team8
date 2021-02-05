@@ -39,10 +39,6 @@ import speech as speech
 import chat as chat 
 import animations as animations
 from fsm import *
-<<<<<<< HEAD
-=======
-
->>>>>>> 3f3eb681c901383c457a6d05ef77a7f83e04f46f
 
 DRESW = 1280 # resolution width
 DRESH = 720 # res height
