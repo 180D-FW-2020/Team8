@@ -179,6 +179,7 @@ class MainWidget(QWidget):
         
         self.layout = QGridLayout()
         self.setMainLayout()
+        self.threadpool = QThreadPool()
 
         self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
