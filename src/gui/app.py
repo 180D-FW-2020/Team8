@@ -200,10 +200,10 @@ class MainWidget(QWidget):
 
     def __internal_connect__(self):
         # manager -> overlay
-        self.manager.topic.connect(lambda topic: self.overlay.changeTopic(topic))
+        self.manager.update.connect(lambda topic: self.overlay.changeTopic(topic))
 
         # display
-        for board in BoardManager.boards.values():
+        for board in self.manager.boards.values():
             board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
 
         self.fsm(self.signals, self.slots)
@@ -220,7 +220,7 @@ class MainWidget(QWidget):
 
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.listener.receivePhrase)
-        for board in BoardManager.boards.values():
+        for board in self.manager.boards.values():
             self.__create_worker__(board["net"].listen)
 
     def __phrase_rec__(self, phrase):

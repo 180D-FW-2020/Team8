@@ -26,7 +26,7 @@ EMPTYBOARD = {
             }
 
 class BoardManager(QObject):
-    topic = pyqtSignal(str)
+    update = pyqtSignal(str)
     def __init__(self, user, parent=None):
         super().__init__(parent)
 
