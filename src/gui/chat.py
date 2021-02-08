@@ -38,7 +38,7 @@ class BoardManager(QObject):
         self.boards = {"general": 
             {
             "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
+                                color = self.color,
             "chat"      :   chat_image.ARChat(self.root + self.topic)
             }
         }

@@ -18,7 +18,7 @@ Public Members:
         '''
         pass
 
-    def write(self, user, message, color):
+    def write(self, topic, user, message, color, time):
         '''
         Writes a message to be updated to the currently active board
 
@@ -26,11 +26,23 @@ Public Members:
             - user (str): the name of the user who sent the message
             - message (str): the message sent by the user
             - color (tuple): the RGB tuple associated with the user
+            - time (dict): dictionary with hour, minute, second
         
         Returns:
             - chat: an np.ndarray at 480p(?) of the chat with the modified message
         '''
         pass
+
+    def userWrite(self, message):
+        '''
+        Writes out a message to the user's type-out message box
+        
+        Inputs:
+            - message (str): the string to place in the user's message box
+        
+        Returns:
+            - chat: an np.ndarray at 480p(?) of the chat with the modified message
+        '''
 
     def switchTopic(self, topic):
         '''
