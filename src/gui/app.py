@@ -167,7 +167,7 @@ class MainWidget(QWidget):
 
         self.signals = [self.placeSignal, self.messageSignal, self.returnSignal, self.cancelSignal]
         self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
-        self.homographyIsActive = False
+        self.homographyIsActive = True
 
         self.timer = QTimer(self)
 
@@ -212,8 +212,8 @@ class MainWidget(QWidget):
         self.threadpool.start(worker)
 
     def __constant_workers__(self):
-        self.__create_worker__(self.video.captureFrames)
         self.timer.start(DINTERVAL)
+        self.__create_worker__(self.video.captureFrames)
 
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.listener.receivePhrase)

@@ -27,12 +27,13 @@ EMPTYBOARD = {
 
 class BoardManager(QObject):
     update = pyqtSignal(str)
-    def __init__(self, user, parent=None):
+    def __init__(self, user, color=(np.randint(0, 256), np.randint(0, 256), np.randint(0, 256)), parent=None):
         super().__init__(parent)
 
         self.root = "./data/gui/"
         self.topic_prefix = "ece180d/MEAT/"
         self.user = user
+        self.color = color
         self.topic = "general"
         self.boards = {"general": 
             {
