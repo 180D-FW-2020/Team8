@@ -27,7 +27,7 @@ EMPTYBOARD = {
 
 class BoardManager(QObject):
     update = pyqtSignal(str)
-    def __init__(self, user, color=(np.randint(0, 256), np.randint(0, 256), np.randint(0, 256)), parent=None):
+    def __init__(self, user, color=(np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
 
         self.root = "./data/gui/"
@@ -38,7 +38,7 @@ class BoardManager(QObject):
         self.boards = {"general": 
             {
             "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
-                                color = self.color,
+                                color = self.color),
             "chat"      :   chat_image.ARChat(self.root + self.topic)
             }
         }

@@ -43,6 +43,7 @@ Public Members:
         Returns:
             - chat: an np.ndarray at 480p(?) of the chat with the modified message
         '''
+        pass
 
     def switchTopic(self, topic):
         '''
