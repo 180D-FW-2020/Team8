@@ -56,3 +56,4 @@ class FSM:
 
     def __print_state__(self, state, sID):
         state.entered.connect(lambda: print("current state: " + str(sID)))
+
