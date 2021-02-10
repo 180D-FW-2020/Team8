@@ -1,6 +1,17 @@
 import cv2 as cv
 import json
 
+import sys
+
+PATH = [
+    "src/gui",
+    "data/gui",
+
+]
+
+for lib in PATH:
+    sys.path.append(lib)
+
 class ARChat():
     def __init__(self, path):
         self.messages = []
@@ -57,7 +68,7 @@ class ARChat():
 
     # post messages to chatboard
     def write(self):
-        im = cv.imread('img.jpg', 1)
+        im = cv.imread('C:\\Users\\nrgza\\Documents\\180D\\MEAT\\data\\gui\\chat.jpg', 1)
         index = 0
         for message in self.messages:
             if len(message[3]) != 0:
@@ -73,6 +84,7 @@ class ARChat():
 
     # post message rooms to chatboard
     def writeRooms(self):
+        im = cv.imread('chat.jpg', 1)
         index = 0
         print(self.rooms)
         for room, highlighted in self.rooms:

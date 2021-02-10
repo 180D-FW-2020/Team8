@@ -1,4 +1,13 @@
-import mqtt_link as mqtt
+import sys
+
+PATH = [
+    "src/comms/mqtt"
+]
+
+for lib in PATH:
+    sys.path.append(lib)
+    
+import mqtt
 
 # defining for test script
 if __name__ == '__main__':
@@ -7,8 +16,15 @@ if __name__ == '__main__':
     # Start a client
     mqtt_tx = mqtt.MQTTLink("ece180d/MEAT/general")
 
-    # Add data
-    mqtt_tx.addText("some text", "Jack")
-    
-    # Send
-    mqtt_tx.send()
+    message = {
+        'sender'    :   'Nico', 
+        'color'     :   (255, 0, 0), 
+        'data'      :   'This is a test message.',
+        'time'      :    {
+            'hour': 11,
+            'minute': 52,
+            'second': 0
+        }
+    }
+
+    mqtt_tx.send(message)

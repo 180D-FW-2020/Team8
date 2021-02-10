@@ -1,8 +1,22 @@
+import sys
+
+PATH = [
+    "src/gui",
+    "test"
+]
+
+for lib in PATH:
+    sys.path.append(lib)
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+import cv2 as cv
+
 import mqtt
 import chat_image
 import numpy as np
 import datetime
-import os
 
 EMPTYBOARD = {  
     "topic"     :
@@ -11,37 +25,33 @@ EMPTYBOARD = {
             }
 
 class BoardManager(QObject):
-    update = pyqtSignal()
-    changetopic = pyqtSignal(str)
-    def __init__(self, user, parent=None):
+    update = pyqtSignal(str)
+    def __init__(self, user, color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
 
+        self.root = "./data/gui/"
         self.topic_prefix = "ece180d/MEAT/"
         self.user = user
+        self.color = color
         self.topic = "general"
         self.boards = {"general": 
             {
-            "net"       :   mqtt.MQTTNetObject(self.topic_prefix + "general", user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
-            "chat"      :   chat_image.ARChat()
+            "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
+                                color = self.color),
+            "chat"      :   chat_image.ARChat(self.root + self.topic)
             }
         }
 
-        self.gesturer = mqtt.MQTTIMUObject(self.topic_prefix + "general/gesture", user)
+        self.gesturer = mqtt.MQTTIMUObject(board = self.topic_prefix + "general/gesture", user = user)
         self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
-        
 
-    def createBoard(self, topic:str, net:mqtt.MQTTNetObject, chat:chat_image.ARChat):
-        
-        net.receive.connect(lambda x: self.receivePost(topic, x))
-
-        new_board = { topic     :
-                        {
+    def createBoard(self, topic:str):
+        self.boards[topic] = {
             "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand()))
-            "chat"      :   chat_image.ARChat()
-            }} 
-        self.boards.append(new_board)
+                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
+            "chat"      :   chat_image.ARChat(self.root + topic)
+            }
+        self.boards[topic]["net"].receive.connect(lambda x: self.__receive__(topic, x))
 
     def switchTopic(self, forward):
         keys = self.boards.keys()
@@ -58,8 +68,8 @@ class BoardManager(QObject):
                 self.topic = keys[len(keys)-1]
 
         boards[self.topic]["chat"].write()
-        self.changetopic.emit(self.topic)
-        self.update.emit()
+        self.topic.emit(self.topic)
+
 
     def userPost(self, message):
         board = self.boards[self.topic]
@@ -76,26 +86,31 @@ class BoardManager(QObject):
 
         board["chat"].queue(user, message, color, time)
         board["chat"].write()
-        self.update.emit()
 
-    def receivePost(self, topic, message):
+    def __receive__(self, topic, message):
         board = self.boards[topic]
         user = message['sender']
         color = message['color']
         time = message['time']
-        board["chat"].queue(user, message, color, time)
+        text = message['data']
+        board["chat"].queue(user, text, color, time)
 
         if self.topic is topic:
             board["chat"].write()
-            self.update.emit()
 
-class BoardOverlay(QOjbect):
+class BoardOverlay(QObject):
+    board = pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.model = cv.imread('../../data/gui/model_qr.png')
-        self.overlay = cv.imread('path/to/original/overlay')
+        self.model = cv.imread('data/gui/model_qr.png')
+        overlay = cv.imread('data/gui/general.jpg')
+        if not overlay:
+            cv.imwrite('data/gui/general.jpg', self.model)
+            self.overlay = self.model
+        else:
+            self.overlay = overlay
         self.topic = "general"
-        self.board_root = "path"
+        self.board_root = "data/gui/"
 
     def changeTopic(self, topic):
         self.topic = topic
@@ -109,7 +124,8 @@ class BoardOverlay(QOjbect):
         kp1, des1 = orb.detectAndCompute(self.model, None) 
 
         overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = cameraimage.copy()
+        augmentedimage = image.copy()
+
 
         kp2, des2 = orb.detectAndCompute(image, None)
         matches = self.__match__(des1, des2)
@@ -155,6 +171,3 @@ class BoardOverlay(QOjbect):
         augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
-
-    def run(self, image):
-    

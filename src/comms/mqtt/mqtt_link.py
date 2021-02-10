@@ -1,3 +1,4 @@
+
 ######################################
 # File Name : mqtt_message
 #
@@ -14,8 +15,12 @@ import time
 import datetime
 import queue
 
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
-class MQTTLink:
+
+class MQTTLink(QObject):
 
     # MQTT client functions
     def __on_connect_subscriber(self, client, userdata, flags, rc):
@@ -50,7 +55,8 @@ class MQTTLink:
             self.receiveMessage(cur)
 
 
-    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface"):
+    def __init__(self, board, user, color = (255, 255, 255), emoji = "/smileyface", parent=None):
+        super().__init__(parent)
         self.tx = mqtt.Client()
         self.rx = mqtt.Client()
         self.board = board
@@ -132,7 +138,7 @@ class MQTTLink:
             IDs.append(msg["ID"])
         self.last_recieved[message["senderID"]] = IDs
 
-    def addText(self, text, receiver, emojis):
+    def addText(self, text, receiver, emojis = []):
         now = datetime.datetime.now()
         ID = self.board + '_' + self.user + '_' + str(self.count)
         msg = {
@@ -177,14 +183,12 @@ class MQTTLink:
     def listen(self, duration= -1):
         #only listen if a receiver is initiated
         if duration == -1:
-            self.rx.loop_start() # changed from loop forever so nonblocking thread
             self.listen_called = True
+            self.rx.loop_forever() # changed from loop forever so nonblocking thread
         else:
             self.rx.loop_start()
             time.sleep(duration)
             self.rx.loop_stop()
-
-    def getTopic
 
     #network getter functions
     def getColor(self, user):
