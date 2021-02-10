@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # Note: make sure you are reading values from a subscriber on the same board to see the result
     # Start a client
-    mqtt_tx = mqtt.MQTTLink("ece180d/MEAT/general")
+    mqtt_tx = mqtt.MQTTLink("ece180d/MEAT")
 
     message = {
         'sender'    :   'Nico', 

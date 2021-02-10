@@ -24,6 +24,7 @@ class MQTTLink(QObject):
     def __on_connect_subscriber__(self, client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
+        print("Connection returned result: " + str(rc))
         client.subscribe(self.topic, qos=1)
     
     def __on_disconnect_subscriber__(self, client, userdata, rc):
@@ -42,6 +43,7 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
 
     def __on_message__(self, client, userdata, message):
+        message = json.loads(str(message.payload)[2:-1])
         self.__receive__(message)
 
     def __init__(self, topic : str, parent=None):
@@ -80,9 +82,8 @@ class MQTTLink(QObject):
         Inputs:
             - message: a received json string
         '''
-        msg = json.loads(message)
-        print('got: ', msg)
-        self.message.emit(msg)
+        print(message)
+        self.message.emit(message)
 
     ## Public #######################################################################################################
         
@@ -98,8 +99,7 @@ class MQTTLink(QObject):
             - None
         '''
         if duration == -1:
-            self.listen_called = True
-            self.rx.loop_forever() # changed from loop forever so nonblocking thread
+            self.rx.loop_forever()
         else:
             self.rx.loop_start()
             time.sleep(duration)
