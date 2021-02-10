@@ -105,7 +105,7 @@ class BoardOverlay(QObject):
         super().__init__(parent)
         self.model = cv.imread('data/gui/model_qr.png')
         overlay = cv.imread('data/gui/general.jpg')
-        if not overlay:
+        if overlay.any() == None:
             cv.imwrite('data/gui/general.jpg', self.model)
             self.overlay = self.model
         else:

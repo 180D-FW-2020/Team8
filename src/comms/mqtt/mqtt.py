@@ -33,7 +33,7 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
     
     def __on_connect_publisher__(self, client, userdata, flags, rc):
-        print("Connection returned result: "+str(rc))
+        print("Connection returned result: " + str(rc))
     
     def __on_disconnect_publisher__(self, client, userdata, rc):
         if rc != 0:
