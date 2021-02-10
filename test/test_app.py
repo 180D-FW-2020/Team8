@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import *
 import sys
 
 sys.path.append("src/gui")
-
 import app
 
 # @desc

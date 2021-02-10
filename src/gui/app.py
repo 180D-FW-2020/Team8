@@ -217,7 +217,7 @@ class MainWidget(QWidget):
         self.__create_worker__(self.video.captureFrames)
         # self.__create_worker__(self.__print_phrases__)
         self.__create_worker__(self.listener.speechHandler)
-        self.__create_worker__(self.listener.receivePhrase)
+        # self.__create_worker__(self.listener.receivePhrase)
         for board in self.manager.boards.values():
             self.__create_worker__(board["net"].listen)
 
