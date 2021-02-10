@@ -27,17 +27,18 @@ EMPTYBOARD = {
 
 class BoardManager(QObject):
     update = pyqtSignal(str)
-    def __init__(self, user, parent=None):
+    def __init__(self, user, color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
 
         self.root = "./data/gui/"
         self.topic_prefix = "ece180d/MEAT/"
         self.user = user
+        self.color = color
         self.topic = "general"
         self.boards = {"general": 
             {
             "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
+                                color = self.color),
             "chat"      :   chat_image.ARChat(self.root + self.topic)
             }
         }
@@ -51,7 +52,7 @@ class BoardManager(QObject):
                                 color = (np.random.rand(), np.random.rand(), np.random.rand())),
             "chat"      :   chat_image.ARChat(self.root + topic)
             }
-        self.boards[topic]["net"].receive.connect(lambda x: self.receivePost(topic, x))
+        self.boards[topic]["net"].receive.connect(lambda x: self.__receive__(topic, x))
 
 
     def switchTopic(self, forward):
@@ -87,12 +88,13 @@ class BoardManager(QObject):
         board["chat"].queue(user, message, color, time)
         board["chat"].write()
 
-    def receivePost(self, topic, message):
+    def __receive__(self, topic, message):
         board = self.boards[topic]
         user = message['sender']
         color = message['color']
         time = message['time']
-        board["chat"].queue(user, message, color, time)
+        text = message['data']
+        board["chat"].queue(user, text, color, time)
 
         if self.topic is topic:
             board["chat"].write()
@@ -102,7 +104,12 @@ class BoardOverlay(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = cv.imread('data/gui/model_qr.png')
-        self.overlay = cv.imread('data/gui/general.jpg')
+        overlay = cv.imread('data/gui/general.jpg')
+        if not overlay:
+            cv.imwrite('data/gui/general.jpg', self.model)
+            self.overlay = self.model
+        else:
+            self.overlay = overlay
         self.topic = "general"
         self.board_root = "data/gui/"
 
