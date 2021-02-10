@@ -183,7 +183,9 @@ class MainWidget(QWidget):
         self.threadpool = QThreadPool()
 
         self.signals.append(self.listener.transcribed_phrase)
-        self.slots = [self.toggleHomography, self.messageListenSlot]
+        yesHomo = lambda: self.setHomography(True)
+        noHomo = lambda: self.setHomography(False)
+        self.slots = [yesHomo, noHomo, self.messageListenSlot]
         self.fsm = FSM(self.signals, self.slots)
         self.fsm.state_machine.start()
 
@@ -240,8 +242,8 @@ class MainWidget(QWidget):
             time.sleep(1)
             print(self.listener.phrases)
 
-    def toggleHomography(self):
-        self.homographyIsActive = not self.homographyIsActive
+    def setHomography(self, value):
+        self.homographyIsActive = value
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     def messageListenSlot(self):
