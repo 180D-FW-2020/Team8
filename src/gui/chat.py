@@ -18,7 +18,6 @@ import chat_image
 import numpy as np
 import datetime
 
-
 EMPTYBOARD = {  
     "topic"     :
     {"net"      :   mqtt.MQTTNetObject, 
@@ -54,7 +53,6 @@ class BoardManager(QObject):
             }
         self.boards[topic]["net"].receive.connect(lambda x: self.__receive__(topic, x))
 
-
     def switchTopic(self, forward):
         keys = self.boards.keys()
         idx = keys.index(self.topic)
@@ -71,6 +69,7 @@ class BoardManager(QObject):
 
         boards[self.topic]["chat"].write()
         self.topic.emit(self.topic)
+
 
     def userPost(self, message):
         board = self.boards[self.topic]
@@ -127,6 +126,7 @@ class BoardOverlay(QObject):
         overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
         augmentedimage = image.copy()
 
+
         kp2, des2 = orb.detectAndCompute(image, None)
         matches = self.__match__(des1, des2)
         # print(len(matches))
@@ -171,5 +171,3 @@ class BoardOverlay(QObject):
         augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
-
-    

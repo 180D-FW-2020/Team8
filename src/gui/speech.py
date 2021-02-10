@@ -12,6 +12,10 @@ class AudioObject(QObject, audio.SpeechRecognizer):
     error = pyqtSignal()
     def __init__(self, keyphrases : dict, *args, parent=None, **kwargs):
         super().__init__(parent, keyphrases=keyphrases)
+        print("audio init")
+
+    def emitPhrase(self, phrase):
+        self.detected_phrase.emit(phrase)
 
     # @desc
     # emits a string containing the most recently transcribed phrase
@@ -19,21 +23,6 @@ class AudioObject(QObject, audio.SpeechRecognizer):
         while self.current_phrase == None:
             continue
         self.transcribed_phrase.emit(self.current_phrase)
-
-    def receivePhrase(self):
-        print("entered receivePhrase")
-        while True:
-            time.sleep(0.5)
-            print(self.phrases())
-            try:
-                for phrase, found in self.phrases.items():
-                    if found == True:
-                        self.resetDetection(phrase)
-                        self.detected_phrase.emit(phrase)
-            except TypeError:
-                pass
-            except ValueError:
-                pass
 
     def speechHandler(self):
         self.listenForPhrases()
