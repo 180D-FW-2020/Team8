@@ -46,7 +46,7 @@ class MQTTLink:
         cur = json.loads(str(message.payload)[2:-1])
 
         # do not receive our own messages
-        if not (cur["senderID"]==self.user):
+        if not (cur["senderID"] == self.user):
             self.receiveMessage(cur)
 
 
