@@ -167,7 +167,7 @@ class MainWidget(QWidget):
 
         self.signals = [self.placeSignal, self.messageSignal, self.returnSignal, self.cancelSignal]
         self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
-        self.homographyIsActive = False
+        self.homographyIsActive = True
 
         self.timer = QTimer(self)
 
@@ -185,6 +185,7 @@ class MainWidget(QWidget):
         self.signals.append(self.listener.transcribed_phrase)
         self.slots = [self.toggleHomography, self.messageListenSlot]
         self.fsm = FSM(self.signals, self.slots)
+        self.fsm.state_machine.start()
 
         self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
         self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
@@ -212,9 +213,9 @@ class MainWidget(QWidget):
         self.threadpool.start(worker)
 
     def __constant_workers__(self):
-        self.__create_worker__(self.video.captureFrames)
         self.timer.start(DINTERVAL)
-
+        self.__create_worker__(self.video.captureFrames)
+        # self.__create_worker__(self.__print_phrases__)
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.listener.receivePhrase)
         self.__create_worker__(self.__print_phrases__)
@@ -237,7 +238,7 @@ class MainWidget(QWidget):
     def __print_phrases__(self):
         while(1):
             time.sleep(1)
-            print(self.audio_recognizer.phrases)
+            print(self.listener.phrases)
 
     def toggleHomography(self):
         self.homographyIsActive = not self.homographyIsActive

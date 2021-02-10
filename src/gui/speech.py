@@ -24,8 +24,9 @@ class AudioObject(QObject, audio.SpeechRecognizer):
         print("entered receivePhrase")
         while True:
             time.sleep(0.5)
+            print(self.phrases())
             try:
-                for phrase, found in self.phrases():
+                for phrase, found in self.phrases.items():
                     if found == True:
                         self.resetDetection(phrase)
                         self.detected_phrase.emit(phrase)
