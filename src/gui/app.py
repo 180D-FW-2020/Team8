@@ -42,8 +42,8 @@ import chat as chat
 import animations as animations
 from fsm import *
 
-DRESW = 1280 # resolution width
-DRESH = 720 # res height
+DRESW = 640 # resolution width
+DRESH = 480 # res height
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
@@ -114,6 +114,7 @@ class DisplayWidget(QWidget):
     def setImage(self, image):
         # self.processMasks()
         self.image = self._array2qimage(image)
+        self.image = self.image.scaled(DRESW*4, DRESH*4, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.setFixedSize(self.image.size())
         # print(self.image.size())
         self.update()
