@@ -4,21 +4,24 @@ class ARChat():
 '''
 An ARChat object outputs an array with a custom UI created by the Butcher Bros (spec. Michael) 
 
-Public Members:
-    - topics: a dictionary (or list?) mapping board topics to...?    
+Public Functions:
+    - post: posts a message to the ARChat
+    - stage: stages a message to the user's staging area  
+    - getPath: returns the path to the ARChat image   
 '''
-    def __init__(self, topics):
+    def __init__(self, topic, chatrooms = []):
         '''
         Initialize a new ARChat.
         The ARChat always initializes with at least one board topic, "general"
         
         Inputs:
-            - topics: a list of type str, which contains the names of currently active boards
+            - topic: the topic associated with each ARChat
+            - chatrooms: a list of type str, which contains a string of currently active boards
         
         '''
         pass
 
-    def post(self, topic, user, message, color, time):
+    def post(self, user, message, color, time):
         '''
         Posts a message to be updated to the currently active board
 
@@ -27,35 +30,20 @@ Public Members:
             - message (str): the message sent by the user
             - color (tuple): the RGB tuple associated with the user
             - time (dict): dictionary with hour, minute, second
-        
-        Returns:
-            - chat: an np.ndarray at 480p(?) of the chat with the modified message
         '''
         pass
 
-    def write(self, message):
+    def stage(self, message):
         '''
-        Writes out a message to the user's type-out box
+        Stages a message to the user's staging area
         
         Inputs:
             - message (str): the string to place in the user's message box
-        
-        Returns:
-            - chat: an np.ndarray at 480p(?) of the chat with the modified message
         '''
         pass
 
-    def switchTopic(self, topic):
+    def getPath(self):
         '''
-        Switches the current topic displayed
-        
-        Inputs:
-            - topic: a str with the name of the topic to switch to
-        
-        Returns:
-            - None
-        
-        Errors(?):
-            - LookupError: raised when the topic input is not in the boards dictionary (or list?)
+        Returns a path to the saved ARChat .jpg
         '''
         pass
