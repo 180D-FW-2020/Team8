@@ -2,6 +2,7 @@ import sys
 
 PATH = [
     "src/gui",
+    "src/tools",
     "test"
 ]
 
@@ -13,47 +14,121 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import cv2 as cv
 
-import mqtt
-import chat_image
+import mqtt_net as mqtt
+import archat
 import numpy as np
-import datetime
+from datetime import datetime as time
+import stringparser
 
+## Globals #######################################################################################################
+## a list of globals used in this file
+
+DELIM = "slash"
+TOPICPREF = "ece180d/MEAT/"
+ROOT = "data/gui/"
+EMOTEIDS = {
+    "angry"        : 1 ,
+    "cringe"       : 2 ,
+    "cry"          : 3 ,
+    "doubt"        : 4 ,
+    "LOL"          : 5 ,
+    "welp"         : 6 ,
+    "frown"        : 7 ,
+    "grin"         : 8 ,
+    "love"         : 9 ,
+    "ofcourse"     : 10,           
+    "shock"        : 11,
+    "simp"         : 12,
+    "smile"        : 13,
+    "hmmm"         : 14,
+    "tongue"       : 15,
+    "wink"         : 16        
+            }
+MSG = {
+            "message_type" : str,
+            "sender" : str,
+            "data" : str,
+            "time" : {
+                "hour": int,
+                "minute": int,
+                "second": int
+            },
+            "ID" : int, 
+            "color": tuple, 
+            "emoji": list
+        }
 EMPTYBOARD = {  
     "topic"     :
-    {"net"      :   mqtt.MQTTNetObject, 
-    "chat"      :   chat_image.ARChat}
+    {"link"      :   mqtt.MQTTLink, 
+    "chat"      :   archat.ARChat}
             }
+
+## BoardManager #######################################################################################################
+## a class for managing all of the ARChat boards
 
 class BoardManager(QObject):
-    update = pyqtSignal(str)
+    '''
+    A BoardManager object manages the handshake between each ARChat object and each MQTTLink object
+
+    Public Members:
+        - switch: a PyQt signal emitted whenever a board is switched to a new topic
+        - user: a string containing user's username
+        - color: an RGB tuple containing the user's color
+        - topic: the current topic that the manager is writing to
+        - boards: a list of boards to which the manager is subscribed
+
+    Public Functions: 
+        - createBoard: creates a new board which posts to topic
+        - switchTopic: switches the topic to either the next or previous
+        - send: sends a message to the currently active board
+        - listen: activates listening of all currently active boards
+    '''
+    switch = pyqtSignal(str)
+    emoji = pyqtSignal(list)
     def __init__(self, user, color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
-
-        self.root = "./data/gui/"
-        self.topic_prefix = "ece180d/MEAT/"
+ 
         self.user = user
         self.color = color
+        self.text = ""
         self.topic = "general"
-        self.boards = {"general": 
-            {
-            "net"       :   mqtt.MQTTNetObject(board = self.topic_prefix + "general", user=user, 
-                                color = self.color),
-            "chat"      :   chat_image.ARChat(self.root + self.topic)
-            }
-        }
+        self.boards = {}
 
-        self.gesturer = mqtt.MQTTIMUObject(board = self.topic_prefix + "general/gesture", user = user)
-        self.gesturer.gestup.connect(lambda x: self.switchTopic(x))
+        self.createBoard(self.topic)
+        self.stage(' ')
+
+    def __time__(self):
+        now = time.now()
+        return { "hour": now.hour, "minute": now.minute, "second": now.second }
+
+    def __receive__(self, topic, message):
+        print("entered receive")
+        try:
+            chat = self.boards[topic]['chat']
+        except KeyError:
+            print("Whoa! Looks like there isn't a board with that topic.")
+        
+        user, color, time, text, emojis = message['sender'], message['color'], message['time'], message['data'], message['emoji']
+
+        chat.post(user, text, color, time)
+        self.emoji.emit(emojis)
+
+    def __parse__(self, message):
+        text, emojis = stringparser.parse_string(message, DELIM, EMOTEIDS)
+        return text, emojis
 
     def createBoard(self, topic:str):
         self.boards[topic] = {
-            "net"       :   mqtt.MQTTNetObject(self.topic_prefix + topic, self.user, 
-                                color = (np.random.rand(), np.random.rand(), np.random.rand())),
-            "chat"      :   chat_image.ARChat(self.root + topic)
+            "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
+            "chat"      :   archat.ARChat(topic, len(self.boards), list(self.boards.keys()))
             }
-        self.boards[topic]["net"].receive.connect(lambda x: self.__receive__(topic, x))
+        self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
 
-    def switchTopic(self, forward):
+        for board in self.boards.values():
+            board['chat'].addRoom(topic)
+
+    def switchTopic(self, forward = True):
+        #TODO: fix
         keys = self.boards.keys()
         idx = keys.index(self.topic)
         if forward:
@@ -68,72 +143,45 @@ class BoardManager(QObject):
                 self.topic = keys[len(keys)-1]
 
         boards[self.topic]["chat"].write()
-        self.topic.emit(self.topic)
+        self.switch.emit(self.topic)
 
+    def stage(self, message : str):
+        chat = self.boards[self.topic]['chat']
+        chat.stage(message)
+        self.text = self.__parse__(message)
+        print(self.text[1])
+        self.emoji.emit(self.text[1])
 
-    def userPost(self, message):
-        board = self.boards[self.topic]
-        board["net"].sendMessage(message)
-
-        user = board["net"].messages["senderID"]
-        color = board["net"].getColor()
-        now = datetime.datetime.now()
-        time = {
-                "hour":now.hour,
-                "minute": now.minute,
-                "second": now.second
-            }
-
-        board["chat"].queue(user, message, color, time)
-        board["chat"].write()
-
-    def __receive__(self, topic, message):
-        board = self.boards[topic]
-        user = message['sender']
-        color = message['color']
-        time = message['time']
-        text = message['data']
-        board["chat"].queue(user, text, color, time)
-
-        if self.topic is topic:
-            board["chat"].write()
+    def send(self):
+        link = self.boards[self.topic]['link']
+        chat = self.boards[self.topic]['chat']
+        time = self.__time__()
+        message, emojis = self.text
+        datapacket = {
+            "message_type" : "text",
+            "sender" : self.user,
+            "data" : message,
+            "time" : time,
+            "color": self.color, 
+            "emoji": emojis
+        }
+        link.send(datapacket)
+        chat.stage('')
+        chat.post(self.user, message, self.color, time)
+         
+    def listen(self):
+        list_en = []
+        for board in self.boards.values():
+            list_en.append(board["link"].listen)
+        return list_en
 
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
-    def __init__(self, parent=None):
+    def __init__(self, topic='general', parent=None):
         super().__init__(parent)
-        self.model = cv.imread('data/gui/model_qr.png')
-        overlay = cv.imread('data/gui/general.jpg')
-        if not overlay:
-            cv.imwrite('data/gui/general.jpg', self.model)
-            self.overlay = self.model
-        else:
-            self.overlay = overlay
-        self.topic = "general"
-        self.board_root = "data/gui/"
-
-    def changeTopic(self, topic):
+        self.model = cv.imread(ROOT + 'model_qr.png')
         self.topic = topic
-        self.overlay = cv.imread(os.path.join(self.board_root, self.topic))
-
-    def run(self, image):
-        overlay = cv.imread(self.board_root + self.topic)
-        height, width, c = self.model.shape
-
-        orb = cv.ORB_create(nfeatures=1000)
-        kp1, des1 = orb.detectAndCompute(self.model, None) 
-
-        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = image.copy()
-
-
-        kp2, des2 = orb.detectAndCompute(image, None)
-        matches = self.__match__(des1, des2)
-        # print(len(matches))
-
-        if len(matches) > 250:
-            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
-        return image
+        self.path = ROOT + topic + '.jpg'
 
     # generates matches between two image descriptors
     # @param
@@ -171,3 +219,27 @@ class BoardOverlay(QObject):
         augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
+
+    def changeTopic(self, topic):
+        self.topic = topic
+        self.path = ROOT + topic + '.jpg'
+
+    def run(self, image):
+        overlay = cv.imread(self.path)
+        height, width, c = self.model.shape
+
+        orb = cv.ORB_create(nfeatures=1000)
+        kp1, des1 = orb.detectAndCompute(self.model, None) 
+
+        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
+        augmentedimage = image.copy()
+
+        kp2, des2 = orb.detectAndCompute(image, None)
+        matches = self.__match__(des1, des2)
+        # print(len(matches))
+
+        if len(matches) > 250:
+            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
+        return image
+
+    

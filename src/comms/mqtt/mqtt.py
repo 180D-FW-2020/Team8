@@ -14,7 +14,7 @@ class MQTTLink(QObject):
     An MQTTLink object can send messages given to it, and receives messages when it is listening
 
     Public Members:
-        - message: a received message that is triggered upon message receive 
+        - message: a received message that is triggered upon message receive, always of structure MSG (globals.py)
     '''
     message = pyqtSignal(dict)
 
@@ -42,6 +42,7 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
 
     def __on_message__(self, client, userdata, message):
+        message = json.loads(str(message.payload)[2:-1])
         self.__receive__(message)
 
     def __init__(self, topic : str, parent=None):
@@ -55,6 +56,7 @@ class MQTTLink(QObject):
         self.tx = Client()
         self.rx = Client()
         self.topic = topic
+        self.isListening = False
 
         #configure client
         # configure transmission
@@ -70,6 +72,8 @@ class MQTTLink(QObject):
         self.rx.connect_async('mqtt.eclipseprojects.io')
 
     def __del__(self):
+        if self.isListening:
+            self.rx.loop_stop()
         self.tx.disconnect()
         self.rx.disconnect()
 
@@ -80,9 +84,7 @@ class MQTTLink(QObject):
         Inputs:
             - message: a received json string
         '''
-        msg = json.loads(message)
-        print('got: ', msg)
-        self.message.emit(msg)
+        self.message.emit(message)
 
     ## Public #######################################################################################################
         
@@ -98,33 +100,27 @@ class MQTTLink(QObject):
             - None
         '''
         if duration == -1:
-            self.listen_called = True
-            self.rx.loop_forever() # changed from loop forever so nonblocking thread
+            self.isListening = True
+            self.rx.loop_start()
         else:
             self.rx.loop_start()
             time.sleep(duration)
             self.rx.loop_stop()
         
-
     def send(self, message):
         '''
         Sends a message or list of messages over the board to which it is subscribed
         
         Inputs:
-            - message: a dictionary or list of dictionaries of structure MSG (globals.py)
+            - message: a dictionary of structure MSG (globals.py)
         
         Returns:
             - None
         '''            
         self.tx.loop_start()
-        if isinstance(message, list):
-            for msg in message:
-                self.tx.publish(self.topic, json.dumps(msg), qos=1)
-        elif isinstance(message, dict):
+        if isinstance(message, dict):
             self.tx.publish(self.topic, json.dumps(message), qos=1)
         else:
             raise TypeError('Unknown message type not supported; try formatting to dictionary')
 
         self.tx.loop_stop()
-
-    
