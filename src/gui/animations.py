@@ -62,7 +62,7 @@ class EmoteWidget(QWidget):
         emotebox.resize(200,200)
         emotebox.setPixmap(
             emote_pixmap.scaled(
-                50,50,Qt.KeepAspectRatio,Qt.SmoothTransformation
+                100,100,Qt.KeepAspectRatio,Qt.SmoothTransformation
                 )
             )
 
