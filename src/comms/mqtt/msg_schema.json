@@ -1,0 +1,183 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "message_type": "text",
+            "sender": "USER_ID",
+            "receiver": "RECIEVER_ID",
+            "data": "some text",
+            "time": {
+                "hour": 1,
+                "minute": 1,
+                "second": 1
+            },
+            "ID": "UNIQUE_GENERATED_ID_FOR_MESSAGE",
+            "color": [
+                1,
+                1,
+                1
+            ],
+            "emoji": "emoji_tag"
+        }
+    ],
+    "required": [
+        "message_type",
+        "sender",
+        "receiver",
+        "data",
+        "time",
+        "ID",
+        "color",
+        "emoji"
+    ],
+    "properties": {
+        "message_type": {
+            "$id": "#/properties/message_type",
+            "type": "string",
+            "title": "The message_type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "text"
+            ]
+        },
+        "sender": {
+            "$id": "#/properties/sender",
+            "type": "string",
+            "title": "The sender schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "USER_ID"
+            ]
+        },
+        "receiver": {
+            "$id": "#/properties/receiver",
+            "type": "string",
+            "title": "The receiver schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "RECIEVER_ID"
+            ]
+        },
+        "data": {
+            "$id": "#/properties/data",
+            "type": "string",
+            "title": "The data schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "some text"
+            ]
+        },
+        "time": {
+            "$id": "#/properties/time",
+            "type": "object",
+            "title": "The time schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "hour": 1,
+                    "minute": 1,
+                    "second": 1
+                }
+            ],
+            "required": [
+                "hour",
+                "minute",
+                "second"
+            ],
+            "properties": {
+                "hour": {
+                    "$id": "#/properties/time/properties/hour",
+                    "type": "integer",
+                    "title": "The hour schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                },
+                "minute": {
+                    "$id": "#/properties/time/properties/minute",
+                    "type": "integer",
+                    "title": "The minute schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                },
+                "second": {
+                    "$id": "#/properties/time/properties/second",
+                    "type": "integer",
+                    "title": "The second schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "ID": {
+            "$id": "#/properties/ID",
+            "type": "string",
+            "title": "The ID schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "UNIQUE_GENERATED_ID_FOR_MESSAGE"
+            ]
+        },
+        "color": {
+            "$id": "#/properties/color",
+            "type": "array",
+            "title": "The color schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [0,0,0],
+            "examples": [
+                [
+                    1,
+                    1,
+                    1
+                ]
+            ],
+            "additionalItems": false,
+            "items": {
+                "$id": "#/properties/color/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/color/items/anyOf/0",
+                        "type": "integer",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": 0,
+                        "examples": [
+                            1
+                        ]
+                    }
+                ]
+            }
+        },
+        "emoji": {
+            "$id": "#/properties/emoji",
+            "type": "string",
+            "title": "The emoji schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "emoji_tag"
+            ]
+        }
+    },
+    "additionalProperties": false
+}

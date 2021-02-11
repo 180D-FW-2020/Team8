@@ -45,7 +45,6 @@ class MainWidget(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.manager = chat.BoardManager('Nico')
 
-
         # threading
         self.threadpool = QThreadPool()
         self.__create_worker__(self.manager.listen)

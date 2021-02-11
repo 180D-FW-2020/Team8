@@ -24,7 +24,6 @@ class MQTTLink(QObject):
     def __on_connect_subscriber__(self, client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        print("Connection returned result: " + str(rc))
         client.subscribe(self.topic, qos=1)
     
     def __on_disconnect_subscriber__(self, client, userdata, rc):
@@ -34,7 +33,7 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
     
     def __on_connect_publisher__(self, client, userdata, flags, rc):
-        print("Connection returned result: " + str(rc))
+        print("Connection returned result: "+str(rc))
     
     def __on_disconnect_publisher__(self, client, userdata, rc):
         if rc != 0:

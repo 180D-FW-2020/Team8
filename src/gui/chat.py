@@ -14,7 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import cv2 as cv
 
-import mqtt
+import mqtt_net as mqtt
 import chat_image
 import numpy as np
 from datetime import time
@@ -119,7 +119,7 @@ class BoardManager(QObject):
 
     def createBoard(self, topic:str):
         self.boards[topic] = {
-            "link"       :   mqtt.MQTTLink(TOPICPREF + topic),
+            "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
             "chat"      :   chat_image.ARChat(ROOT + topic)
             }
         self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
@@ -215,14 +215,14 @@ class BoardOverlay(QObject):
         return augmentedimage
 
     def __overwrite(self, path):
-        overlay = cv.imread(path)
-        if overlay is None:
-            cv.imwrite(path, self.model)
+        cv.imwrite(path, self.model)
 
     def changeTopic(self, topic):
         self.topic = topic
         self.path = ROOT + topic + '.jpg'
-        self.__overwrite(self.path)
+        overlay = cv.imread(path)
+        if overlay is None:
+            self.__overwrite(self.path)
 
     def run(self, image):
         overlay = self.overlay
