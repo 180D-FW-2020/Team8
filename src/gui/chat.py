@@ -15,9 +15,9 @@ from PyQt5.QtWidgets import *
 import cv2 as cv
 
 import mqtt_net as mqtt
-import chat_image
+import archat
 import numpy as np
-from datetime import time
+from datetime import datetime as time
 import stringparser
 
 ## Globals #######################################################################################################
@@ -60,7 +60,7 @@ MSG = {
 EMPTYBOARD = {  
     "topic"     :
     {"link"      :   mqtt.MQTTLink, 
-    "chat"      :   chat_image.ARChat}
+    "chat"      :   archat.ARChat}
             }
 
 ## BoardManager #######################################################################################################
@@ -95,6 +95,7 @@ class BoardManager(QObject):
         self.boards = {}
 
         self.createBoard(self.topic)
+        self.stage(' ')
 
     def __time__(self):
         now = time.now()
@@ -109,13 +110,11 @@ class BoardManager(QObject):
         
         user, color, time, text, emojis = message['sender'], message['color'], message['time'], message['data'], message['emoji']
 
-        chat.queue(user, text, color, time)
-        if self.topic is topic:
-            chat.write()
-        # chat.post(user, text, color, time)
+        chat.post(user, text, color, time)
+        self.emoji.emit(emojis)
 
     def __parse__(self, message):
-        out = stringparser.parse_string(message, DELIM, EMOTEID)
+        out = stringparser.parse_string(message, DELIM, EMOTEIDS)
         text = out[0]
         emojis = out[1]
         return text, emojis
@@ -123,9 +122,12 @@ class BoardManager(QObject):
     def createBoard(self, topic:str):
         self.boards[topic] = {
             "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
-            "chat"      :   chat_image.ARChat(ROOT + topic)
+            "chat"      :   archat.ARChat(topic, len(self.boards), list(self.boards.keys()))
             }
         self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
+
+        for board in self.boards.values():
+            board['chat'].addRoom(topic)
 
     def switchTopic(self, forward = True):
         #TODO: fix
@@ -153,6 +155,7 @@ class BoardManager(QObject):
 
     def send(self):
         link = self.boards[self.topic]['link']
+        chat = self.boards[self.topic]['chat']
         time = self.__time__()
         message, emojis = self.text
         datapacket = {
@@ -164,7 +167,9 @@ class BoardManager(QObject):
             "emoji": emojis
         }
         link.send(datapacket)
-        
+        chat.stage('')
+        chat.post(self.user, message, self.color, time)
+         
     def listen(self):
         list_en = []
         for board in self.boards.values():

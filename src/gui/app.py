@@ -47,7 +47,7 @@ DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
 DINTERVAL = round(1000/DRATE) # frame refresh interval (msec)
 TOPICS = ["Nate", "Tommy", "Michael", "Nico"]
-PHRASES = ["place", "message", "return", "cancel"] 
+PHRASES = ["place", "message", "return", "cancel", "yes", "no"] 
 
 ATIMEOUT = 5000 # speech recognition max phrase time (msec)
 
@@ -183,9 +183,9 @@ class MainWidget(QWidget):
             self.messageSignal, 
             self.returnSignal, 
             self.cancelSignal, 
-            self.listener.transcribed_phrase,
             self.yesSignal, 
-            self.noSignal
+            self.noSignal,
+            self.listener.transcribed_phrase
             ]
 
         yesHomo = lambda: self.setHomography(True)
@@ -265,7 +265,7 @@ class MainWidget(QWidget):
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
-            self.overlay.changeTopic(TOPICS[0])   
+            self.overlay.switchTopic()   
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     # NOTE: all slots should create workers for functions needing threading

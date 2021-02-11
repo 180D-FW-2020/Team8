@@ -29,9 +29,9 @@ class FSM:
         self.s_main.addTransition(signals[1], self.s_msg) # 'send message' enters s_msg_listen
         self.s_main.addTransition(signals[2], self.s_init) # 'close chatbox' hides chatbox
         self.s_msg.addTransition(signals[3], self.s_main) # 'cancel message' backs out of s_msg at any substate
-        self.s_msg_listen.addTransition(signals[4], self.s_msg_confirm) # wait until current phrase changes
-        self.s_msg_confirm.addTransition(signals[5], self.s_msg_send) # 'yes' sends msg
-        self.s_msg_confirm.addTransition(signals[6], self.s_msg_listen) # 'no' returns to listen
+        self.s_msg_listen.addTransition(signals[6], self.s_msg_confirm) # wait until current phrase changes
+        self.s_msg_confirm.addTransition(signals[4], self.s_msg_send) # 'yes' sends msg
+        self.s_msg_confirm.addTransition(signals[5], self.s_msg_listen) # 'no' returns to listen
         self.s_msg.addTransition(self.s_msg_send.entered, self.s_main) # automatically return to main
 
         # put states into a dict and create IDs for them
