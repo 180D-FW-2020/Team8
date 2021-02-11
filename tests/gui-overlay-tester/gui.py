@@ -204,7 +204,7 @@ class ImageOverlayCarousel(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.model = cv.imread('model2.png')
-        self.overlay = [cv.imread('sample1.jpg'), cv.imread('sample2.jpg')]
+        self.overlay = [cv.imread('chat1.jpg'), cv.imread('chat2.jpg')]
         self.trigger = QBasicTimer()
         self.counter = 0
         self.index = 0
@@ -218,8 +218,10 @@ class ImageOverlayCarousel(QObject):
     def next(self):
         if self.index != len(self.overlay) - 1:
             self.index += 1
+            self.overlay = [cv.imread('chat1.jpg'), cv.imread('chat2.jpg')]
         else:
             self.index = 0
+            self.overlay = [cv.imread('chat1.jpg'), cv.imread('chat2.jpg')]
 
     # run video embedder
     def run(self, cameraimage):
@@ -236,7 +238,7 @@ class ImageOverlayCarousel(QObject):
         matches = self.generateMatches(des1, des2)
         print(len(matches))
 
-        if len(matches) > 200:
+        if len(matches) > 250:
             return self.embed(cameraimage, overlayimage, kp1, kp2, matches, augmentedimage, height, width)
         return cameraimage
 
