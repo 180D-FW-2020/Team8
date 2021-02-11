@@ -149,6 +149,7 @@ class BoardManager(QObject):
         chat = self.boards[self.topic]['chat']
         chat.stage(message)
         self.text = self.__parse__(message)
+        print(self.text[1])
         self.emoji.emit(self.text[1])
 
     def send(self):

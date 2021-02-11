@@ -33,7 +33,7 @@ import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-
+# import data.resources
 # implementations with out modules
 import resources
 import mqtt as mqtt 
@@ -172,7 +172,7 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = chat.BoardManager(user='Nico')
+        self.manager = chat.BoardManager(user='Nate')
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
