@@ -116,6 +116,7 @@ class ARChat():
 
     def addRoom(self, topic):
         self.rooms.append(topic)
+        self.write_messages()
         self.write_rooms()
 
     # message overflow processing
