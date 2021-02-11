@@ -5,8 +5,6 @@ from PyQt5.QtWidgets import *
 
 import sys
 
-
-
 sys.path.append("src/comms/mqtt")
 sys.path.append("src/gui")
 
