@@ -8,7 +8,7 @@ import sys
 sys.path.append("src/comms/mqtt")
 sys.path.append("src/gui")
 
-import mqtt
+import mqtt_net as mqtt
 import stringparser
 
 class MQTTNetObject(mqtt.MQTTLink):
@@ -37,22 +37,20 @@ class MQTTNetObject(mqtt.MQTTLink):
         self.addText(msg['data'], msg['receiver'], msg['emojis'])
         self.send()
 
-
-
-class MQTTIMUObject(mqtt.MQTTLink):
+class MQTTIMUObject(QObject):
     gestup = pyqtSignal(bool)
-    def __init__(self, board, user, color=(0, 0, 0), emoji=None, parent=None):
-        super().__init__(board, user, color=color, emoji=emoji, parent=parent)
+    def __init__(self, user, parent=None):
+        super().__init__(parent)
+        self.link = mqtt.MQTTLink('ece180d/MEAT/general/gesture', user_id = user)
+        self.user = user
+        self.link.message.connect(lambda packet: gesture(packet))
 
-    def receiveMessage(self, message):
-        super().receiveMessage(message)
-        
-        for msg in message['messages']:
-            if msg["message_type"] is "gesture":
-                if msg["data"] is "up":
-                    self.gestup.emit(True)
-                elif msg["data"] is "down":
-                    self.gestup.emit(False)
+    def gesture(self, datapacket):
+        if datapacket['message_type'] == 'gesture':
+            if datapacket['data'] is 'up':
+                self.gestup.emit(True)
+            elif datapacket['data'] is 'down':
+                self.gestup.emit(False)
         
 
                      
