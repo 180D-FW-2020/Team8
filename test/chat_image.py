@@ -93,7 +93,6 @@ class ARChat():
                 cv.putText(im, room, 10, im.shape[0]-80-50*index, cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv.LINE_AA, thickness = 2)
         cv.imwrite(str(self.getPath()) + '.jpg', im)
 
-
 if __name__ == '__main__':
     chat1 = ARChat("chat1")
     inputMsg = '{"message_type": "text", "sender": "John", "receiver": "Tyler", "data": "This is the message that will be displayed in AR chat", "time": {"hour": 12, "minute": 31, "second": 22}, "ID": 12345, "color": [255,0,255]}'

@@ -14,7 +14,7 @@ class MQTTLink(QObject):
     An MQTTLink object can send messages given to it, and receives messages when it is listening
 
     Public Members:
-        - message: a received message that is triggered upon message receive 
+        - message: a received message that is triggered upon message receive, always of structure MSG (globals.py)
     '''
     message = pyqtSignal(dict)
 
@@ -82,7 +82,6 @@ class MQTTLink(QObject):
         Inputs:
             - message: a received json string
         '''
-        print(message)
         self.message.emit(message)
 
     ## Public #######################################################################################################
@@ -105,26 +104,20 @@ class MQTTLink(QObject):
             time.sleep(duration)
             self.rx.loop_stop()
         
-
     def send(self, message):
         '''
         Sends a message or list of messages over the board to which it is subscribed
         
         Inputs:
-            - message: a dictionary or list of dictionaries of structure MSG (globals.py)
+            - message: a dictionary of structure MSG (globals.py)
         
         Returns:
             - None
         '''            
         self.tx.loop_start()
-        if isinstance(message, list):
-            for msg in message:
-                self.tx.publish(self.topic, json.dumps(msg), qos=1)
-        elif isinstance(message, dict):
+        if isinstance(message, dict):
             self.tx.publish(self.topic, json.dumps(message), qos=1)
         else:
             raise TypeError('Unknown message type not supported; try formatting to dictionary')
 
         self.tx.loop_stop()
-
-    

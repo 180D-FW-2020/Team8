@@ -2,6 +2,7 @@ import sys
 
 PATH = [
     "src/gui",
+    "src/tools",
     "test"
 ]
 
@@ -63,7 +64,23 @@ EMPTYBOARD = {
             }
 
 class BoardManager(QObject):
-    update = pyqtSignal(str)
+    '''
+    A BoardManager object manages the handshake between each ARChat object and each MQTTLink object
+
+    Public Members:
+        - switch: a PyQt signal emitted whenever a board is switched to a new topic
+        - user: a string containing user's username
+        - color: an RGB tuple containing the user's color
+        - topic: the current topic that the manager is writing to
+        - boards: a list of boards to which the manager is subscribed
+
+    Public Functions: 
+        - createBoard: creates a new board which posts to topic
+        - switchTopic: switches the topic to either the next or previous
+        - send: sends a message to the currently active board
+        - listen: activates listening of all currently active boards
+    '''
+    switch = pyqtSignal(str)
     def __init__(self, user, color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
  
@@ -139,6 +156,10 @@ class BoardManager(QObject):
             "emoji": emojis
         }
         
+    def listen(self):
+        for board in self.boards.values():
+            board["link"].listen()
+
     #TODO: figure out sending/confirm sending
 
     
