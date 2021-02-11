@@ -27,22 +27,22 @@ DELIM = "slash"
 TOPICPREF = "ece180d/MEAT/"
 ROOT = "data/gui/"
 EMOTEIDS = {
-    ":/emotes/angry"        : 1 ,
-    ":/emotes/cringe"       : 2 ,
-    ":/emotes/cry"          : 3 ,
-    ":/emotes/doubt"        : 4 ,
-    ":/emotes/LOL"          : 5 ,
-    ":/emotes/welp"         : 6 ,
-    ":/emotes/frown"        : 7 ,
-    ":/emotes/grin"         : 8 ,
-    ":/emotes/love"         : 9 ,
-    ":/emotes/ofcourse"     : 10,           
-    ":/emotes/shock"        : 11,
-    ":/emotes/simp"         : 12,
-    ":/emotes/smile"        : 13,
-    ":/emotes/hmmm"         : 14,
-    ":/emotes/tongue"       : 15,
-    ":/emotes/wink"         : 16        
+    "angry"        : 1 ,
+    "cringe"       : 2 ,
+    "cry"          : 3 ,
+    "doubt"        : 4 ,
+    "LOL"          : 5 ,
+    "welp"         : 6 ,
+    "frown"        : 7 ,
+    "grin"         : 8 ,
+    "love"         : 9 ,
+    "ofcourse"     : 10,           
+    "shock"        : 11,
+    "simp"         : 12,
+    "smile"        : 13,
+    "hmmm"         : 14,
+    "tongue"       : 15,
+    "wink"         : 16        
             }
 MSG = {
             "message_type" : str,
@@ -114,9 +114,7 @@ class BoardManager(QObject):
         self.emoji.emit(emojis)
 
     def __parse__(self, message):
-        out = stringparser.parse_string(message, DELIM, EMOTEIDS)
-        text = out[0]
-        emojis = out[1]
+        text, emojis = stringparser.parse_string(message, DELIM, EMOTEIDS)
         return text, emojis
 
     def createBoard(self, topic:str):

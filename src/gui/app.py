@@ -216,7 +216,7 @@ class MainWidget(QWidget):
     def __internal_connect__(self):
         # manager connections
         self.manager.switch.connect(lambda topic: self.overlay.changeTopic(topic))
-        self.manager.emoji.connect(lambda emojis: self.emoteSlot(emojis))
+        self.manager.emoji.connect(lambda emojis: self.emote.spawn_emotes(emojis))
 
         # listener connections (not in FSM)
         self.listener.transcribed_phrase.connect(lambda message:self.manager.stage(message))
@@ -274,8 +274,8 @@ class MainWidget(QWidget):
         self.listener.resetCurrentPhrase()
         self.__create_worker__(self.listener.sendCurrentPhrase)
 
-    def emoteSlot(self, emojis):
-        self.__create_worker__(self.emote.spawn_emotes, listIDs=emojis)
+    # def emoteSlot(self, emojis):
+    #     self.__create_worker__(self.emote.spawn_emotes, listIDs=emojis)
 
     def setMainLayout(self):
         self.layout.addWidget(self.display, 0, 0, alignment=Qt.AlignCenter)
