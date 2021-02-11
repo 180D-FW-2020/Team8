@@ -5,8 +5,7 @@ import sys
 
 PATH = [
     "src/gui",
-    "data/gui",
-
+    "data/gui"
 ]
 
 for lib in PATH:

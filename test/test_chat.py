@@ -16,12 +16,12 @@ from PyQt5.QtWidgets import *
 
 import chat
 import thread
-import mqtt
+import mqtt_net as mqtt
 import cv2 as cv
 import time
 
 def sendMessage():
-    link = mqtt.MQTTLink(topic='ece180d/MEAT/general')
+    link = mqtt.MQTTLink(topic='ece180d/MEAT/general', user_id = 'Tommy')
 
     message = {
         'message_type'  :   'text',
@@ -47,7 +47,9 @@ class MainWidget(QWidget):
 
         # threading
         self.threadpool = QThreadPool()
-        self.__create_worker__(self.manager.listen)
+        funcs = self.manager.listen()
+        for func in funcs:
+            self.__create_worker__(func)
 
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)

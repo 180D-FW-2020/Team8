@@ -142,10 +142,9 @@ class MQTTLink(QObject):
                                                             "emoji": packet["senderEmojiImage"]
                                                         }
             for msg in packet["messages"]:
-                if (msg["receiver"] == self.__user or msg["receiver"] == "all") and (msg["ID"] not in self.__last_received_msg_IDS[packet["senderID"]]):
-                    if self.__debug:  
-                        print(msg["sender"], " said: ", msg["data"])
-                    self.message.emit(msg)
+                if self.__debug:  
+                    print(msg["sender"], " said: ", msg["data"])
+                self.message.emit(msg)
     
             # recieve acks
             for ack in packet["acks"]:

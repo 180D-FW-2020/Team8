@@ -24,8 +24,8 @@ import stringparser
 ## a list of globals used in this file
 
 DELIM = "slash"
-TOPICPREF = "180d/MEAT/"
-ROOT = "./data/gui/"
+TOPICPREF = "ece180d/MEAT/"
+ROOT = "data/gui/"
 EMOTEIDS = {
     ":/emotes/angry"        : 1 ,
     ":/emotes/cringe"       : 2 ,
@@ -109,7 +109,10 @@ class BoardManager(QObject):
         
         user, color, time, text, emojis = message['sender'], message['color'], message['time'], message['data'], message['emoji']
 
-        chat.post(user, text, color, time)
+        chat.queue(user, text, color, time)
+        if self.topic is topic:
+            chat.write()
+        # chat.post(user, text, color, time)
 
     def __parse__(self, message):
         out = stringparser.parse_string(message, DELIM, EMOTEID)
@@ -175,7 +178,6 @@ class BoardOverlay(QObject):
         self.model = cv.imread(ROOT + 'model_qr.png')
         self.topic = topic
         self.path = ROOT + topic + '.jpg'
-        self.__overwrite(self.path)
 
     # generates matches between two image descriptors
     # @param
@@ -214,18 +216,12 @@ class BoardOverlay(QObject):
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
 
-    def __overwrite(self, path):
-        cv.imwrite(path, self.model)
-
     def changeTopic(self, topic):
         self.topic = topic
         self.path = ROOT + topic + '.jpg'
-        overlay = cv.imread(path)
-        if overlay is None:
-            self.__overwrite(self.path)
 
     def run(self, image):
-        overlay = self.overlay
+        overlay = cv.imread(self.path)
         height, width, c = self.model.shape
 
         orb = cv.ORB_create(nfeatures=1000)
