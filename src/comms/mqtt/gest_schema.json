@@ -1,0 +1,135 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "message_type": "gesutre",
+            "sender": "USER_ID",
+            "reciever": "RECIEVER_ID",
+            "data": 4,
+            "time": {
+                "hour": 1,
+                "minute": 1,
+                "second": 1
+            },
+            "ID": "CUSTOM_GENERATED_MSG_ID"
+        }
+    ],
+    "required": [
+        "message_type",
+        "sender",
+        "reciever",
+        "data",
+        "time",
+        "ID"
+    ],
+    "properties": {
+        "message_type": {
+            "$id": "#/properties/message_type",
+            "type": "string",
+            "title": "The message_type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "gesutre"
+            ]
+        },
+        "sender": {
+            "$id": "#/properties/sender",
+            "type": "string",
+            "title": "The sender schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "USER_ID"
+            ]
+        },
+        "reciever": {
+            "$id": "#/properties/reciever",
+            "type": "string",
+            "title": "The reciever schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "RECIEVER_ID"
+            ]
+        },
+        "data": {
+            "$id": "#/properties/data",
+            "type": "integer",
+            "title": "The data schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                4
+            ]
+        },
+        "time": {
+            "$id": "#/properties/time",
+            "type": "object",
+            "title": "The time schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "hour": 1,
+                    "minute": 1,
+                    "second": 1
+                }
+            ],
+            "required": [
+                "hour",
+                "minute",
+                "second"
+            ],
+            "properties": {
+                "hour": {
+                    "$id": "#/properties/time/properties/hour",
+                    "type": "integer",
+                    "title": "The hour schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                },
+                "minute": {
+                    "$id": "#/properties/time/properties/minute",
+                    "type": "integer",
+                    "title": "The minute schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                },
+                "second": {
+                    "$id": "#/properties/time/properties/second",
+                    "type": "integer",
+                    "title": "The second schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        1
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "ID": {
+            "$id": "#/properties/ID",
+            "type": "string",
+            "title": "The ID schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "CUSTOM_GENERATED_MSG_ID"
+            ]
+        }
+    },
+    "additionalProperties": false
+}

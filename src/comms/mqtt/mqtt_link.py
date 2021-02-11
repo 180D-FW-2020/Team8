@@ -44,7 +44,6 @@ class MQTTLink(QObject):
         else:
             print('Expected Disconnect')
 
-    
     def __on_message(self, client, userdata, message):
         #filter data to get only json
         #parse message
