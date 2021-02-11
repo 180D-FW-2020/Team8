@@ -136,7 +136,6 @@ class MQTTLink(QObject):
         '''
         packet = json.loads(message) # note: there can be multiple messages in the packet recieved
         if packet["senderID"] != self.__user:
-            print('mqtt packet compiling')
             if packet["senderID"] not in self.__last_received_msg_IDS:
                 self.__last_received_msg_IDS[packet["senderID"]]= []
                 self.__network_users[packet["senderID"]] = {
@@ -144,10 +143,10 @@ class MQTTLink(QObject):
                                                             "emoji": packet["senderEmojiImage"]
                                                         }
             for msg in packet["messages"]:
-                if self.__debug:  
-                    print(msg["sender"], " said: ", msg["data"])
-                print("mqtt emit")
-                self.message.emit(msg)
+                if msg["ID"] not in self.__last_received_msg_IDS[packet["senderID"]]:
+                    if self.__debug:  
+                        print(msg["sender"], " said: ", msg["data"])
+                    self.message.emit(msg)
 
     
             # recieve acks

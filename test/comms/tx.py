@@ -17,7 +17,7 @@ if __name__ == '__main__':
     mqtt_tx = mqtt.MQTTLink("ece180d/MEAT/general", user_id = 'Jack')
 
     message = {
-        'sender'    :   'jACK', 
+        'sender'    :   'Jack', 
         'color'     :   (255, 0, 0), 
         'data'      :   'This is a test message.',
         'time'      :    {
