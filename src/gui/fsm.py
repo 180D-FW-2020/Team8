@@ -20,9 +20,10 @@ class FSM:
         self.state_machine.setInitialState(self.s_init)
 
         # signals, slots, and transitions
-        self.s_init.entered.connect(slots[1]) # hide chatbox
         self.s_main.entered.connect(slots[0]) # display chatbox
+        self.s_init.entered.connect(slots[1]) # hide chatbox
         self.s_msg_listen.entered.connect(slots[2]) # message listen worker
+        self.s_msg_send.entered.connect(slots[3]) # send the message
 
         self.s_init.addTransition(signals[0], self.s_main) # 'start chatbox' displays chatbox
         self.s_main.addTransition(signals[1], self.s_msg) # 'send message' enters s_msg_listen

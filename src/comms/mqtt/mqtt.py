@@ -57,6 +57,7 @@ class MQTTLink(QObject):
         self.tx = Client()
         self.rx = Client()
         self.topic = topic
+        self.isListening = False
 
         #configure client
         # configure transmission
@@ -72,6 +73,8 @@ class MQTTLink(QObject):
         self.rx.connect_async('mqtt.eclipseprojects.io')
 
     def __del__(self):
+        if self.isListening:
+            self.rx.loop_stop()
         self.tx.disconnect()
         self.rx.disconnect()
 
@@ -98,7 +101,8 @@ class MQTTLink(QObject):
             - None
         '''
         if duration == -1:
-            self.rx.loop_forever()
+            self.isListening = True
+            self.rx.loop_start()
         else:
             self.rx.loop_start()
             time.sleep(duration)

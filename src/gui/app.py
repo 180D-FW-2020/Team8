@@ -165,10 +165,7 @@ class MainWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.signals = [self.placeSignal, self.messageSignal, self.returnSignal, self.cancelSignal]
-        self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
-        self.homographyIsActive = True
-
+        # MainWidget Object Members
         self.timer = QTimer(self)
 
         self.display = DisplayWidget()
@@ -179,20 +176,35 @@ class MainWidget(QWidget):
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
 
         self.layout = QGridLayout()
-        self.setMainLayout()
         self.threadpool = QThreadPool()
 
-        self.signals.append(self.listener.transcribed_phrase)
+        self.signals = [
+            self.placeSignal, 
+            self.messageSignal, 
+            self.returnSignal, 
+            self.cancelSignal, 
+            self.listener.transcribed_phrase,
+            self.yesSignal, 
+            self.noSignal
+            ]
+
         yesHomo = lambda: self.setHomography(True)
         noHomo = lambda: self.setHomography(False)
-        self.slots = [yesHomo, noHomo, self.messageListenSlot]
+
+        self.slots = [
+            yesHomo, 
+            noHomo, 
+            self.messageListenSlot, 
+            self.manager.send
+            ]
+
+        self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
+        self.homographyIsActive = True
+
+        self.setMainLayout()
+        
         self.fsm = FSM(self.signals, self.slots)
         self.fsm.state_machine.start()
-
-        self.listener.transcribed_phrase.connect(lambda message:self.manager.userPost(message))
-        self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
-        self.timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
-        self.frameSignal.connect(lambda image: self.display.setImage(image))
 
         # create all relevant chats
         for topic in TOPICS:
@@ -202,27 +214,31 @@ class MainWidget(QWidget):
         self.__internal_connect__()
 
     def __internal_connect__(self):
-        # manager -> overlay
-        self.manager.update.connect(lambda topic: self.overlay.changeTopic(topic))
+        # manager connections
+        self.manager.switch.connect(lambda topic: self.overlay.changeTopic(topic))
+        self.manager.emoji.connect(lambda emojis: self.emoteSlot(emojis))
 
-        # display
-        for board in self.manager.boards.values():
-            board["net"].emoji.connect(lambda emotes: self.emote.spawn_emotes(emotes))
-        
-        
-    def __create_worker__(self, func):
-        worker = JobRunner(func)
+        # listener connections (not in FSM)
+        self.listener.transcribed_phrase.connect(lambda message:self.manager.stage(message))
+        self.listener.detected_phrase.connect(lambda phrase:self.__phrase_rec__(phrase))
+
+        # timeout and framing connections
+        self.timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
+        self.frameSignal.connect(lambda image: self.display.setImage(image))
+
+    def __create_worker__(self, func, *args, **kwargs):
+        worker = JobRunner(func, *args, **kwargs)
         self.threadpool.start(worker)
 
     def __constant_workers__(self):
         self.timer.start(DINTERVAL)
         self.__create_worker__(self.video.captureFrames)
-        # self.__create_worker__(self.__print_phrases__)
         self.__create_worker__(self.listener.speechHandler)
-        self.__create_worker__(self.listener.receivePhrase)
         self.__create_worker__(self.__print_phrases__)
-        for board in self.manager.boards.values():
-            self.__create_worker__(board["net"].listen)
+        
+        listen_funcs = self.manager.listen()
+        for func in listen_funcs:
+            self.__create_worker__(func)
 
     def __phrase_rec__(self, phrase):
         if phrase in PHRASES:
@@ -245,10 +261,21 @@ class MainWidget(QWidget):
     def setHomography(self, value):
         self.homographyIsActive = value
 
+    # for testing purposes
+    def keyPressEvent(self, event):
+        super(MainWidget, self).keyPressEvent(event)
+        if event.key() == Qt.Key_Q:
+            self.overlay.changeTopic(TOPICS[0])   
+
     # NOTE: replace message slots with textwidget functions or smth if desired
+    # NOTE: all slots should create workers for functions needing threading
+
     def messageListenSlot(self):
         self.listener.resetCurrentPhrase()
-        self.listener.sendCurrentPhrase()
+        self.__create_worker__(self.listener.sendCurrentPhrase)
+
+    def emoteSlot(self, emojis):
+        self.__create_worker__(self.emote.spawn_emotes, listIDs=emojis)
 
     def setMainLayout(self):
         self.layout.addWidget(self.display, 0, 0, alignment=Qt.AlignCenter)

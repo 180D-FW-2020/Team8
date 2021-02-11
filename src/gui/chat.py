@@ -24,7 +24,7 @@ import stringparser
 ## a list of globals used in this file
 
 DELIM = "slash"
-TOPICPREF = "ece180d/MEAT/"
+TOPICPREF = "180d/MEAT/"
 ROOT = "./data/gui/"
 EMOTEIDS = {
     ":/emotes/angry"        : 1 ,
@@ -63,6 +63,9 @@ EMPTYBOARD = {
     "chat"      :   chat_image.ARChat}
             }
 
+## BoardManager #######################################################################################################
+## a class for managing all of the ARChat boards
+
 class BoardManager(QObject):
     '''
     A BoardManager object manages the handshake between each ARChat object and each MQTTLink object
@@ -81,11 +84,13 @@ class BoardManager(QObject):
         - listen: activates listening of all currently active boards
     '''
     switch = pyqtSignal(str)
+    emoji = pyqtSignal(list)
     def __init__(self, user, color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256)), parent=None):
         super().__init__(parent)
  
         self.user = user
         self.color = color
+        self.text = ""
         self.topic = "general"
         self.boards = {}
 
@@ -98,19 +103,13 @@ class BoardManager(QObject):
     def __receive__(self, topic, message):
         print("entered receive")
         try:
-            board = self.boards[topic]
+            chat = self.boards[topic]['chat']
         except KeyError:
             print("Whoa! Looks like there isn't a board with that topic.")
         
-        user = message['sender']
-        color = message['color']
-        time = message['time']
-        text = message['data']
-        emojis = message['emoji']
+        user, color, time, text, emojis = message['sender'], message['color'], message['time'], message['data'], message['emoji']
 
-        board["chat"].queue(user, text, color, time)
-        if self.topic is topic:
-            board["chat"].write()
+        chat.post(user, text, color, time)
 
     def __parse__(self, message):
         out = stringparser.parse_string(message, DELIM, EMOTEID)
@@ -141,13 +140,19 @@ class BoardManager(QObject):
                 self.topic = keys[len(keys)-1]
 
         boards[self.topic]["chat"].write()
-        self.update.emit(self.topic)
+        self.switch.emit(self.topic)
 
-    def send(self, message : str):
-        board = self.boards[self.topic]
+    def stage(self, message : str):
+        chat = self.boards[self.topic]['chat']
+        chat.stage(message)
+        self.text = self.__parse__(message)
+        self.emoji.emit(self.text[1])
+
+    def send(self):
+        link = self.boards[self.topic]['link']
         time = self.__time__()
-        message, emojis = self.__parse__(message)
-        msg = {
+        message, emojis = self.text
+        datapacket = {
             "message_type" : "text",
             "sender" : self.user,
             "data" : message,
@@ -155,50 +160,22 @@ class BoardManager(QObject):
             "color": self.color, 
             "emoji": emojis
         }
+        link.send(datapacket)
         
     def listen(self):
+        list_en = []
         for board in self.boards.values():
-            board["link"].listen()
-
-    #TODO: figure out sending/confirm sending
-
-    
+            list_en.append(board["link"].listen)
+        return list_en
 
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
-    def __init__(self, parent=None):
+    def __init__(self, topic='general', parent=None):
         super().__init__(parent)
-        self.model = cv.imread('data/gui/model_qr.png')
-        overlay = cv.imread('data/gui/general.jpg')
-        if overlay.any() == None:
-            cv.imwrite('data/gui/general.jpg', self.model)
-            self.overlay = self.model
-        else:
-            self.overlay = overlay
-        self.topic = "general"
-        self.board_root = "data/gui/"
-
-    def changeTopic(self, topic):
+        self.model = cv.imread(ROOT + 'model_qr.png')
         self.topic = topic
-        self.overlay = cv.imread(os.path.join(self.board_root, self.topic))
-
-    def run(self, image):
-        overlay = cv.imread(self.board_root + self.topic + '.jpg')
-        height, width, c = self.model.shape
-
-        orb = cv.ORB_create(nfeatures=1000)
-        kp1, des1 = orb.detectAndCompute(self.model, None) 
-
-        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = image.copy()
-
-        kp2, des2 = orb.detectAndCompute(image, None)
-        matches = self.__match__(des1, des2)
-        # print(len(matches))
-
-        if len(matches) > 250:
-            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
-        return image
+        self.path = ROOT + topic + '.jpg'
+        self.__overwrite(self.path)
 
     # generates matches between two image descriptors
     # @param
@@ -236,5 +213,33 @@ class BoardOverlay(QObject):
         augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
+
+    def __overwrite(self, path):
+        overlay = cv.imread(path)
+        if overlay is None:
+            cv.imwrite(path, self.model)
+
+    def changeTopic(self, topic):
+        self.topic = topic
+        self.path = ROOT + topic + '.jpg'
+        self.__overwrite(self.path)
+
+    def run(self, image):
+        overlay = self.overlay
+        height, width, c = self.model.shape
+
+        orb = cv.ORB_create(nfeatures=1000)
+        kp1, des1 = orb.detectAndCompute(self.model, None) 
+
+        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
+        augmentedimage = image.copy()
+
+        kp2, des2 = orb.detectAndCompute(image, None)
+        matches = self.__match__(des1, des2)
+        # print(len(matches))
+
+        if len(matches) > 250:
+            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
+        return image
 
     
