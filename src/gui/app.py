@@ -243,6 +243,7 @@ class MainWidget(QWidget):
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.__print_phrases__)
         
+        self.__create_worker__(self.gesturer.link.listen)
         listen_funcs = self.manager.listen()
         for func in listen_funcs:
             self.__create_worker__(func)

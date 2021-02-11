@@ -43,10 +43,12 @@ class MQTTIMUObject(QObject):
         super().__init__(parent)
         self.link = mqtt.MQTTLink('ece180d/MEAT/general/gesture', user_id = user)
         self.user = user
-        self.link.message.connect(lambda packet: gesture(packet))
+        self.link.message.connect(lambda packet: self.gesture(packet))
 
     def gesture(self, datapacket):
+        print('message sent')
         if datapacket['message_type'] == 'gesture':
+            print('is gesture')
             if datapacket['data'] is 'up':
                 self.gestup.emit(True)
             elif datapacket['data'] is 'down':

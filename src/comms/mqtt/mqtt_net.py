@@ -42,7 +42,6 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
 
     def __on_message__(self, client, userdata, message):
-        print("mqtt receive")
         self.__receive__(str(message.payload)[2:-1])
 
     def __init__(self, topic : str, user_id : str, color : list = [255,255,255], debug = True , parent=None):
