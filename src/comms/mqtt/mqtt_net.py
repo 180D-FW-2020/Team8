@@ -93,16 +93,35 @@ class MQTTLink(QObject):
         self.rx.disconnect()
 
     def __addMessage__(self, message_content):
+        '''
+        A private function to add a passed in message to our data packet. This handles the addition of
+        a unique message ID tag
+
+        Inputs:
+            - message content : dictionary of form MSG without an ID tag
+        '''
         ID = self.topic + '_' + self.__user + '_' + str(self.__message_id_count)
         message_content["ID"] = ID
         self.__data_packet["messages"].append(message_content)
         self.__message_id_count += 1
 
     def __add_ack__(self,ID):
+        '''
+        A private function that handles the adding of acknowledgements to send to other users
+
+        Inputs:
+            - ID: outgoing acknowledgement tag 
+        '''
         if not (ID in self.__data_packet["acks"]):
             self.__data_packet["acks"].append(ID)
 
     def __recieve_ack__(self, ID):
+        '''
+        A private function that handles the recipt of acknoledgements from other users
+
+        Inputs:
+            - ID: acknowledgement tag 
+        '''
         for message in self.__data_packet["messages"]:
             if ID == message["ID"]:
                 self.__data_packet["messages"].remove(message)
@@ -180,10 +199,8 @@ class MQTTLink(QObject):
             if isinstance(message, list):
                 for msg in message:
                     self.__addMessage__(msg)
-                    #self.tx.publish(self.topic, json.dumps(msg), qos=1)
             elif isinstance(message, dict):
                 self.__addMessage__(message)
-                #self.tx.publish(self.topic, json.dumps(message), qos=1)
             else:
                 raise TypeError('Unknown message type not supported; try formatting to dictionary')
         self.tx.publish(self.topic, json.dumps(self.__data_packet), qos=1)

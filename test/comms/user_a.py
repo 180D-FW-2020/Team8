@@ -11,14 +11,15 @@ import sys
 import os
 import time
 import datetime
-import threading
-print(os.getcwd())
 
 sys.path.append('../../src/comms/mqtt/')
 sys.path.append('src/comms/mqtt/')
 import mqtt_net as mqtt
 
+# Instantiate link
 mqtt_link_a = mqtt.MQTTLink("ece180d/MEAT/general", "a",[0,0,0], True)
+
+# Create Messages
 now = datetime.datetime.now()
 msg_for_b = {
             "message_type" : "text",
@@ -47,18 +48,14 @@ msg_for_all = {
             "emoji": None
         }
 
-#listen_thread = threading.Thread(target=mqtt_link_a.listen, args=())
-#listen_thread.start()
-
+# Send and recieve messages until empty queue
 mqtt_link_a.listen()
 mqtt_link_a.send(msg_for_b)
 mqtt_link_a.send(msg_for_all)
 while  mqtt_link_a._MQTTLink__data_packet["messages"]:
-    #print("here")
     mqtt_link_a.send()
     time.sleep(1)
 mqtt_link_a.send()
-
 
 time.sleep(1)
 
