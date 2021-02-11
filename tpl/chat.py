@@ -2,7 +2,7 @@
 ## a class for creating a message board in OpenCV
 class ARChat():
 '''
-An ARChat object outputs a 480p(?) array with a custom UI created by the Butcher Bros (spec. Michael) 
+An ARChat object outputs an array with a custom UI created by the Butcher Bros (spec. Michael) 
 
 Public Members:
     - topics: a dictionary (or list?) mapping board topics to...?    
@@ -18,9 +18,9 @@ Public Members:
         '''
         pass
 
-    def write(self, topic, user, message, color, time):
+    def post(self, topic, user, message, color, time):
         '''
-        Writes a message to be updated to the currently active board
+        Posts a message to be updated to the currently active board
 
         Inputs:
             - user (str): the name of the user who sent the message
@@ -33,9 +33,9 @@ Public Members:
         '''
         pass
 
-    def userWrite(self, message):
+    def write(self, message):
         '''
-        Writes out a message to the user's type-out message box
+        Writes out a message to the user's type-out box
         
         Inputs:
             - message (str): the string to place in the user's message box

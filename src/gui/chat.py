@@ -107,28 +107,6 @@ class BoardOverlay(QObject):
         self.topic = "general"
         self.board_root = "data/gui/"
 
-    def changeTopic(self, topic):
-        self.topic = topic
-        self.overlay = cv.imread(os.path.join(self.board_root, self.topic))
-
-    def run(self, image):
-        overlay = cv.imread(self.board_root + self.topic)
-        height, width, c = self.model.shape
-
-        orb = cv.ORB_create(nfeatures=1000)
-        kp1, des1 = orb.detectAndCompute(self.model, None) 
-
-        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
-        augmentedimage = image.copy()
-
-        kp2, des2 = orb.detectAndCompute(image, None)
-        matches = self.__match__(des1, des2)
-        # print(len(matches))
-
-        if len(matches) > 250:
-            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
-        return image
-
     # generates matches between two image descriptors
     # @param
     # des1: model image descriptors
@@ -165,5 +143,29 @@ class BoardOverlay(QObject):
         augmentedimage = cv.bitwise_and(augmentedimage, augmentedimage, mask=invertedmask)                  
         augmentedimage = cv.bitwise_or(warpedimage, augmentedimage)  
         return augmentedimage
+
+    def changeTopic(self, topic):
+        self.topic = topic
+        self.overlay = cv.imread(os.path.join(self.board_root, self.topic))
+
+    def run(self, image):
+        overlay = cv.imread(self.board_root + self.topic)
+        height, width, c = self.model.shape
+
+        orb = cv.ORB_create(nfeatures=1000)
+        kp1, des1 = orb.detectAndCompute(self.model, None) 
+
+        overlay = cv.resize(overlay, (width, height))  # resize image to fit model image dimensions
+        augmentedimage = image.copy()
+
+        kp2, des2 = orb.detectAndCompute(image, None)
+        matches = self.__match__(des1, des2)
+        # print(len(matches))
+
+        if len(matches) > 250:
+            return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
+        return image
+
+    
 
     
