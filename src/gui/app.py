@@ -13,8 +13,9 @@ PATH = [
         'src/comms/mqtt',
         'src/envrd',
         'src/imgproc',
-        'src/gui'
-        'data/gui'
+        'src/gui',
+        'data/gui',
+        'data'
        ]
 
 import sys
@@ -34,6 +35,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 # implementations with out modules
+import resources
 import mqtt as mqtt 
 import speech as speech
 import chat as chat 

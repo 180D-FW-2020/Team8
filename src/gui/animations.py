@@ -4,6 +4,10 @@ from PyQt5.QtWidgets import *
 import sys
 import random
 
+sys.path.append('data')
+
+import resources
+
 WIDTH = 640
 HEIGHT = 480
 XCENTER = WIDTH//2
