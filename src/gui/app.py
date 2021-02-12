@@ -41,6 +41,7 @@ import mqtt
 import speech 
 import chat
 import animations 
+
 from fsm import *
 
 DRESW = 640 # resolution width
@@ -244,6 +245,7 @@ class MainWidget(QWidget):
         self.__create_worker__(self.__print_phrases__)
         
         self.__create_worker__(self.gesturer.link.listen)
+
         listen_funcs = self.manager.listen()
         for func in listen_funcs:
             self.__create_worker__(func)

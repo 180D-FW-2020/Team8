@@ -128,6 +128,7 @@ class ARChat():
     # post messages to chatboard
     def write_messages(self):
         im = cv.imread(ROOT + 'chat.png', 1)
+
         index = 0
         for message in self.messages:
             if len(message[3]) != 0:
