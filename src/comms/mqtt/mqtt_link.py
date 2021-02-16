@@ -44,7 +44,6 @@ class MQTTLink(QObject):
         else:
             print('Expected Disconnect')
 
-    
     def __on_message(self, client, userdata, message):
         #filter data to get only json
         #parse message
@@ -138,7 +137,7 @@ class MQTTLink(QObject):
             IDs.append(msg["ID"])
         self.last_recieved[message["senderID"]] = IDs
 
-    def addText(self, text, receiver, emojis):
+    def addText(self, text, receiver, emojis = []):
         now = datetime.datetime.now()
         ID = self.board + '_' + self.user + '_' + str(self.count)
         msg = {
@@ -183,8 +182,8 @@ class MQTTLink(QObject):
     def listen(self, duration= -1):
         #only listen if a receiver is initiated
         if duration == -1:
-            self.rx.loop_start() # changed from loop forever so nonblocking thread
             self.listen_called = True
+            self.rx.loop_forever() # changed from loop forever so nonblocking thread
         else:
             self.rx.loop_start()
             time.sleep(duration)

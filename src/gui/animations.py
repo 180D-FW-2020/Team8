@@ -2,7 +2,13 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
+sys.path.append('data')
+import resources
 import random
+
+sys.path.append('data')
+
+import resources
 
 WIDTH = 640
 HEIGHT = 480
@@ -56,7 +62,7 @@ class EmoteWidget(QWidget):
         emotebox.resize(200,200)
         emotebox.setPixmap(
             emote_pixmap.scaled(
-                50,50,Qt.KeepAspectRatio,Qt.SmoothTransformation
+                100,100,Qt.KeepAspectRatio,Qt.SmoothTransformation
                 )
             )
 

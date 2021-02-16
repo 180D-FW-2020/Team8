@@ -64,6 +64,7 @@ class MQTTIMUObject(mqtt.MQTTLink):
     def __init__(self, board, user, color=(0, 0, 0), emoji=None, parent=None):
         super().__init__(board, user, color=color, emoji=emoji, parent=parent)
 
+
     def receiveMessage(self, message):
         super().receiveMessage(message)
         
