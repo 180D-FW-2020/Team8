@@ -102,6 +102,7 @@ def handleIMU(mqtt_test, action, reciever):
             }
         if action:
             mqtt_test.send(msg)
+            print("sent action: ",action)
         else:
             mqtt_test.send()
     last_state = action
