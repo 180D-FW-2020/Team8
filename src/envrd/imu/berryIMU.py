@@ -23,8 +23,9 @@ import math
 import IMU
 import datetime
 import os
-
-import mqtt_link as mqtt
+sys.path.append('../../comms/mqtt/')
+sys.path.append('src/comms/mqtt/')
+import mqtt_net as mqtt
 
 
 RAD_TO_DEG = 57.29578
@@ -83,9 +84,22 @@ KFangleY = 0.0
 
 
 def handleIMU(mqtt_test, action, reciever):
-    mqtt_test.addGesture(action, reciever)
-    mqtt_test.send()
-
+    now = datetime.datetime.now()
+    msg = {
+            "message_type" : "gesutre",
+            "sender" : mqtt_test._MQTTLink__user,
+            "reciever" : reciever,
+            "data" : action,
+            "time" : {
+                "hour":now.hour,
+                "minute": now.minute,
+                "second": now.second
+            }
+        }
+    if action:
+        mqtt_test.send(msg)
+    else:
+        mqtt_test.send()
 
 def kalmanFilterY ( accAngle, gyroRate, DT):
     y=0.0
@@ -414,6 +428,8 @@ def runIMU(mqtt_test, reciever):
             handleIMU(mqtt_test, "up", reciever)
         elif AccYangle < -60:
             handleIMU(mqtt_test, "down", reciever)
+        else:
+            handleIMU(mqtt_test, "", reciever) # just send acks
 
 if __name__ == "__main__": 
     reciever = "my_name"
