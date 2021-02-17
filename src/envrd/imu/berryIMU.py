@@ -82,25 +82,29 @@ YP_11 = 0.0
 KFangleX = 0.0
 KFangleY = 0.0
 
+# Comms State Variable
+last_state = ""
 
 def handleIMU(mqtt_test, action, reciever):
-    now = datetime.datetime.now()
-    msg = {
-            "message_type" : "gesutre",
-            "sender" : mqtt_test._MQTTLink__user,
-            "reciever" : reciever,
-            "data" : action,
-            "time" : {
-                "hour":now.hour,
-                "minute": now.minute,
-                "second": now.second
+    global last_state
+    if action != last_state or not action: 
+        now = datetime.datetime.now()
+        msg = {
+                "message_type" : "gesutre",
+                "sender" : mqtt_test._MQTTLink__user,
+                "reciever" : reciever,
+                "data" : action,
+                "time" : {
+                    "hour":now.hour,
+                    "minute": now.minute,
+                    "second": now.second
+                }
             }
-        }
-    if action:
-        mqtt_test.send(msg)
-    else:
-        mqtt_test.send()
-
+        if action:
+            mqtt_test.send(msg)
+        else:
+            mqtt_test.send()
+    last_state = action
 def kalmanFilterY ( accAngle, gyroRate, DT):
     y=0.0
     S=0.0
