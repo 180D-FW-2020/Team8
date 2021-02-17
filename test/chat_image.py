@@ -1,16 +1,6 @@
 import cv2 as cv
 import json
 
-import sys
-
-PATH = [
-    "src/gui",
-    "data/gui"
-]
-
-for lib in PATH:
-    sys.path.append(lib)
-
 class ARChat():
     def __init__(self, path):
         self.messages = []

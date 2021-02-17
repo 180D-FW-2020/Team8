@@ -6,20 +6,7 @@
  #  @brief ui and event handling for data/classifiers
  #
 
-PATH = [
-        # '../training/classifier_training',
-        # '../video_embedder',
-        # '../static_ar_exploration',
-        '../comms/mqtt',
-        '../envrd',
-        '../imgproc',
-        '../../data/gui'
-       ]
-
 import sys
-
-for lib in PATH:
-    sys.path.append(lib)
 
 import time
 try:

@@ -3,9 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
 
-sys.path.append("src/gui")
-
-import app
+from .src.gui import app
 
 # @desc
 # initializes all UI widgets

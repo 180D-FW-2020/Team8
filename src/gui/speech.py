@@ -1,9 +1,6 @@
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-import sys
-
-sys.path.append("src/envrd")
 import audio
 
 class AudioObject(QObject, audio.SpeechRecognizer):

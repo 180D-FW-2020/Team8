@@ -12,7 +12,6 @@ import sys
 import os
 import time
 
-sys.path.append('src/comms/mqtt/')
 import mqtt_link as mqtt
 
 mqtt_link = mqtt.MQTTLink("ece180d/MEAT/general/gesture", "my_name")

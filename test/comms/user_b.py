@@ -7,15 +7,10 @@
 #  
 #  @brief testing file creating mqtt user with tag "b" 
 #
-
-import sys
 import os
 import time
 import datetime
 import threading
-
-sys.path.append('../../src/comms/mqtt/')
-sys.path.append('src/comms/mqtt')
 
 import mqtt_net as mqtt
 

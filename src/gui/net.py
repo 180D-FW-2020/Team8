@@ -3,12 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-import sys
-
-sys.path.append("src/comms/mqtt")
-sys.path.append("src/gui")
-
-import mqtt_net as mqtt
+from comms import mqtt
 import stringparser
 
 class MQTTNetObject(mqtt.MQTTLink):

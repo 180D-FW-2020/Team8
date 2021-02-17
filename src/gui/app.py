@@ -6,22 +6,7 @@
  #  @brief ui and event handling for data/classifiers
  #
 
-PATH = [
-        # '../training/classifier_training',
-        # '../video_embedder',
-        # '../static_ar_exploration',
-        'src/comms/mqtt',
-        'src/envrd',
-        'src/imgproc',
-        'src/gui',
-        'data/gui',
-        'data'
-       ]
-
 import sys
-
-for lib in PATH:
-    sys.path.append(lib)
 
 import time
 try:
@@ -33,11 +18,11 @@ import numpy as np
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-# import data.resources
+
 # implementations with out modules
-import resources
-import net
-import mqtt 
+# import mqtt_net as mqtt
+# import net
+import comms
 import speech 
 import chat
 import animations 

@@ -7,13 +7,10 @@
 #  
 #  @brief one user with tag "a"
 #
-import sys
 import os
 import time
 import datetime
 
-sys.path.append('../../src/comms/mqtt/')
-sys.path.append('src/comms/mqtt/')
 import mqtt_net as mqtt
 
 # Instantiate link

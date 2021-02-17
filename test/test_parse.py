@@ -1,5 +1,4 @@
 import sys
-sys.path.append('src/gui')
 import stringparser
 
 EMOTEIDS = {

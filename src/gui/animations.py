@@ -2,13 +2,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
-sys.path.append('data')
 import resources
 import random
-
-sys.path.append('data')
-
-import resources
 
 WIDTH = 640
 HEIGHT = 480

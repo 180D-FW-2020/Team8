@@ -1,12 +1,3 @@
-import sys
-
-PATH = [
-    "src/comms/mqtt"
-]
-
-for lib in PATH:
-    sys.path.append(lib)
-
 import mqtt
 
 # defining for test script

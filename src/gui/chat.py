@@ -1,23 +1,14 @@
 import sys
 
-PATH = [
-    "src/gui",
-    "src/tools",
-    "test"
-]
-
-for lib in PATH:
-    sys.path.append(lib)
-
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import cv2 as cv
+from datetime import datetime as time
 
 import mqtt_net as mqtt
 import archat
 import numpy as np
-from datetime import datetime as time
 import stringparser
 
 ## Globals #######################################################################################################
