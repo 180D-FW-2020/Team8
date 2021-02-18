@@ -42,7 +42,6 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
 
     def __on_message__(self, client, userdata, message):
-        print("mqtt receive")
         self.__receive__(str(message.payload)[2:-1])
 
     def __init__(self, topic : str, user_id : str, color : list = [255,255,255], debug = True , parent=None):
@@ -136,7 +135,6 @@ class MQTTLink(QObject):
         '''
         packet = json.loads(message) # note: there can be multiple messages in the packet recieved
         if packet["senderID"] != self.__user:
-            print('mqtt packet compiling')
             if packet["senderID"] not in self.__last_received_msg_IDS:
                 self.__last_received_msg_IDS[packet["senderID"]]= []
                 self.__network_users[packet["senderID"]] = {
