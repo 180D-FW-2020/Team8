@@ -90,7 +90,7 @@ def handleIMU(mqtt_test, action, reciever):
     if action != last_state or not action: 
         now = datetime.datetime.now()
         msg = {
-                "message_type" : "gesutre",
+                "message_type" : "gesture",
                 "sender" : mqtt_test._MQTTLink__user,
                 "reciever" : reciever,
                 "data" : action,
