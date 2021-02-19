@@ -1,19 +1,19 @@
 ##
- #  File: soft_SVM.py
+ #  File: svm_training.py
  # 
  #  Author: Thomas Kost
  #  
- #  Date: 15 November 2020
+ #  Date: 17 February 2021
  #  
- #  @brief object for a soft SVM Classifier, designed for use with arbitrary data and classes
- #         supports One vs. One classification
+ #  @brief soft svm trainer, will take in data and produce a set of CSVs corresponding to the
+ #         coeficcients produced by our loss function
  #
 import pandas as pd
 import numpy as np
 import cvxpy as cp
 
 
-class soft_SVM:
+class soft_SVM_trainer:
     def __init__(self, K, M):
         self.K = K   # Number of classes
         self.M = M   # Number of features
@@ -119,6 +119,3 @@ def build_allocation_matrix(n):
     else:
         return np.block([[np.ones((1,n-1)), np.zeros((1,(n-1)*(n-2)//2))],
                         [-np.eye(n-1), build_allocation_matrix(n-1)]])
-                        
-if __name__ == '__main__':
-    pass
