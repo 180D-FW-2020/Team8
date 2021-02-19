@@ -75,7 +75,15 @@ class MainWidget(QWidget):
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
-            self.spawn.emit([4,1,7])
+            self.spawn.emit([1,1,1])
+        if event.key() == Qt.Key_W:
+            self.spawn.emit([2])
+        if event.key() == Qt.Key_E:
+            self.spawn.emit([3])
+        if event.key() == Qt.Key_R:
+            self.spawn.emit([4])
+        if event.key() == Qt.Key_T:
+            self.spawn.emit([5])
 
 class testUI:
     def __init__(self):
