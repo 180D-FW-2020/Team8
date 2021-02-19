@@ -145,9 +145,9 @@ class IMUSampleObject:
         ###############################################
         #### Apply low pass filter ####
         ###############################################
-        ACCx =  ACCx  * ACC_LPF_FACTOR + self.oldXAccRawValue*(1 - ACC_LPF_FACTOR);
-        ACCy =  ACCy  * ACC_LPF_FACTOR + self.oldYAccRawValue*(1 - ACC_LPF_FACTOR);
-        ACCz =  ACCz  * ACC_LPF_FACTOR + self.oldZAccRawValue*(1 - ACC_LPF_FACTOR);
+        ACCx =  ACCx  * ACC_LPF_FACTOR + self.oldXAccRawValue*(1 - ACC_LPF_FACTOR)
+        ACCy =  ACCy  * ACC_LPF_FACTOR + self.oldYAccRawValue*(1 - ACC_LPF_FACTOR)
+        ACCz =  ACCz  * ACC_LPF_FACTOR + self.oldZAccRawValue*(1 - ACC_LPF_FACTOR)
 
         self.oldXAccRawValue = ACCx
         self.oldYAccRawValue = ACCy
@@ -178,9 +178,9 @@ class IMUSampleObject:
         self.acc_medianTable2Z.sort()
 
         # The middle value is the value we are interested in
-        ACCx = self.acc_medianTable2X[int(ACC_MEDIANTABLESIZE/2)];
-        ACCy = self.acc_medianTable2Y[int(ACC_MEDIANTABLESIZE/2)];
-        ACCz = self.acc_medianTable2Z[int(ACC_MEDIANTABLESIZE/2)];
+        ACCx = self.acc_medianTable2X[int(ACC_MEDIANTABLESIZE/2)]
+        ACCy = self.acc_medianTable2Y[int(ACC_MEDIANTABLESIZE/2)]
+        ACCz = self.acc_medianTable2Z[int(ACC_MEDIANTABLESIZE/2)]
 
         #Convert Gyro raw to degrees per second
         rate_gyr_x =  GYRx * G_GAIN
@@ -241,7 +241,7 @@ class IMUSampleObject:
         return [AccXangle, AccYangle,self.gyroXangle,self.gyroYangle,self.gyroZangle,self.CFangleX,self.CFangleY,self.kalmanX,self.kalmanY, pitch, roll,ACCx,ACCy,ACCz]
 
     def sample(self):
-        
+
         # filtered sample
         sample = self.__get_filtered_values()
 
