@@ -176,11 +176,11 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = chat.BoardManager(user='Nico')
+        self.manager = chat.BoardManager(user='John')
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        self.gesturer = net.MQTTIMUObject(user='Nico')
+        self.gesturer = net.MQTTIMUObject(user='John')
 
         self.layout = QGridLayout()
         self.threadpool = QThreadPool()
@@ -244,13 +244,9 @@ class MainWidget(QWidget):
         self.timer.start(DINTERVAL)
         self.__create_worker__(self.video.captureFrames)
         self.__create_worker__(self.listener.speechHandler)
+        self.__create_worker__(self.manager.link.listen)
         self.__create_worker__(self.__print_phrases__)
-        
         self.__create_worker__(self.gesturer.link.listen)
-
-        listen_funcs = self.manager.listen()
-        for func in listen_funcs:
-            self.__create_worker__(func)
 
     def __phrase_rec__(self, phrase):
         if phrase in PHRASES:

@@ -42,6 +42,7 @@ class MQTTLink(QObject):
             print('Expected Disconnect')
 
     def __on_message__(self, client, userdata, message):
+        print('__on_message__')
         self.__receive__(str(message.payload)[2:-1])
 
     def __init__(self, topic : str, user_id : str, color : list = [255,255,255], debug = True , parent=None):
@@ -86,6 +87,8 @@ class MQTTLink(QObject):
         self.__network_users = {} # {"USERID": {"color":[0,0,0],
                                   #             "emoji": "some_tag"}}
         self.__debug = debug
+
+        self.send()
 
 
     def __del__(self):
@@ -135,6 +138,7 @@ class MQTTLink(QObject):
         '''
         packet = json.loads(message) # note: there can be multiple messages in the packet recieved
         if packet["senderID"] != self.__user:
+            print('self is not user')
             if packet["senderID"] not in self.__last_received_msg_IDS:
                 self.__last_received_msg_IDS[packet["senderID"]]= []
                 self.__network_users[packet["senderID"]] = {
@@ -143,6 +147,7 @@ class MQTTLink(QObject):
                                                         }
             for msg in packet["messages"]:
                 if msg["ID"] not in self.__last_received_msg_IDS[packet["senderID"]]:
+                    print('checking message debug')
                     if self.__debug:  
                         print(msg["sender"], " said: ", msg["data"])
                     self.message.emit(msg)
