@@ -129,7 +129,11 @@ class BoardManager(QObject):
 
     def switchTopic(self, forward = True):
         #TODO: fix
+<<<<<<< HEAD
         keys = list(self.boards.keys())
+=======
+        keys = self.boards.keys()
+>>>>>>> 97e293757de95f3a8bd3156bc1bbd53216dd7498
         idx = keys.index(self.topic)
         if forward:
             try:

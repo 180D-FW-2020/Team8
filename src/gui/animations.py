@@ -111,9 +111,6 @@ class EmoteWidget(QWidget):
 
     def addToAnimationsQueue(self, animation):
         self.animations_group.addAnimation(animation)
-        self.executeAnimations()
-
-    def executeAnimations(self):
         self.animations_group.start()
         
     def clearAnimations(self):
