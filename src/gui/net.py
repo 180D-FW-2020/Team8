@@ -47,13 +47,10 @@ class MQTTIMUObject(QObject):
         self.link.message.connect(lambda packet: self.gesture(packet))
 
     def gesture(self, datapacket):
-        print('message sent')
+        print('message received')
         if datapacket['message_type'] == 'gesture':
-            print('is gesture')
-            if datapacket['data'] is 'up':
-                self.gestup.emit(True)
-            elif datapacket['data'] is 'down':
-                self.gestup.emit(False)
+            word = datapacket['data']
+            self.gestup.emit(word == 'up')
         
 
                      

@@ -221,6 +221,8 @@ class MainWidget(QWidget):
         self.__internal_connect__()
 
     def __internal_connect__(self):
+        self.gesturer.gestup.connect(lambda up: self.manager.switchTopic(up))
+
         # manager connections
         self.manager.switch.connect(lambda topic: self.overlay.changeTopic(topic))
         self.manager.emoji.connect(lambda emojis: self.emote.spawn_emotes(emojis))
@@ -233,7 +235,6 @@ class MainWidget(QWidget):
         self.timer.timeout.connect(lambda: self.__imgpass__(self.video.buffer))
         self.frameSignal.connect(lambda image: self.display.setImage(image))
 
-        self.gesturer.gestup.connect(lambda up: self.manager.switchTopic(up))
 
     def __create_worker__(self, func, *args, **kwargs):
         worker = JobRunner(func, *args, **kwargs)
@@ -288,7 +289,7 @@ class MainWidget(QWidget):
         if event.key() == Qt.Key_N:
             self.noSignal.emit()
         if event.key() == Qt.Key_S:
-            self.manager.switchTopic()
+            self.gesturer.gestup.emit(True)
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     # NOTE: all slots should create workers for functions needing threading
