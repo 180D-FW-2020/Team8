@@ -171,6 +171,7 @@ class MainWidget(QWidget):
 
         # MainWidget Object Members
         self.timer = QTimer(self)
+        self.setFocusPolicy(Qt.StrongFocus)
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
@@ -272,8 +273,20 @@ class MainWidget(QWidget):
     # for testing purposes
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
-        if event.key() == Qt.Key_Q:
-            self.overlay.switchTopic()   
+        if event.key() == Qt.Key_P:
+            self.placeSignal.emit()
+        if event.key() == Qt.Key_R:
+            self.returnSignal.emit()
+        if event.key() == Qt.Key_M:
+            self.messageSignal.emit()
+        if event.key() == Qt.Key_C:
+            self.cancelSignal.emit()
+        if event.key() == Qt.Key_Y:
+            self.yesSignal.emit()
+        if event.key() == Qt.Key_N:
+            self.noSignal.emit()
+        if event.key() == Qt.Key_S:
+            self.manager.switchTopic()
 
     # NOTE: replace message slots with textwidget functions or smth if desired
     # NOTE: all slots should create workers for functions needing threading
@@ -281,9 +294,6 @@ class MainWidget(QWidget):
     def messageListenSlot(self):
         self.listener.resetCurrentPhrase()
         self.__create_worker__(self.listener.sendCurrentPhrase)
-
-    # def emoteSlot(self, emojis):
-    #     self.__create_worker__(self.emote.spawn_emotes, listIDs=emojis)
 
     def setMainLayout(self):
         self.layout.addWidget(self.display, 0, 0, alignment=Qt.AlignCenter)

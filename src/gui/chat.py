@@ -102,7 +102,6 @@ class BoardManager(QObject):
         return { "hour": now.hour, "minute": now.minute, "second": now.second }
 
     def __receive__(self, topic, message):
-        print("entered receive")
         try:
             chat = self.boards[topic]['chat']
         except KeyError:
@@ -118,19 +117,19 @@ class BoardManager(QObject):
         return text, emojis
 
     def createBoard(self, topic:str):
-        self.boards[topic] = {
-            "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
-            "chat"      :   archat.ARChat(topic, len(self.boards), list(self.boards.keys()))
-            }
-        self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
+        if topic not in list(self.boards.keys()):
+            self.boards[topic] = {
+                "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
+                "chat"      :   archat.ARChat(topic, len(self.boards), list(self.boards.keys()))
+                }
+            self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
 
-        for board in self.boards.values():
-            board['chat'].addRoom(topic)
+            for board in self.boards.values():
+                board['chat'].addRoom(topic)
 
     def switchTopic(self, forward = True):
         #TODO: fix
-        print('switch')
-        keys = self.boards.keys()
+        keys = list(self.boards.keys())
         idx = keys.index(self.topic)
         if forward:
             try:
@@ -143,7 +142,6 @@ class BoardManager(QObject):
             except IndexError:
                 self.topic = keys[len(keys)-1]
 
-        boards[self.topic]["chat"].write()
         self.switch.emit(self.topic)
 
     def stage(self, message : str):
