@@ -176,11 +176,11 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = chat.BoardManager(user='Nico')
+        self.manager = chat.BoardManager(user='Tommy')
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        self.gesturer = net.MQTTIMUObject(user='Nico')
+        self.gesturer = net.MQTTIMUObject(user='Tommy')
 
         self.layout = QGridLayout()
         self.threadpool = QThreadPool()
