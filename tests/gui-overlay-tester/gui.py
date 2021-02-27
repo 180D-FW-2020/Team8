@@ -289,6 +289,159 @@ class ImageOverlayCarousel(QObject):
         augmentedimage = self.run()
         self.out_image.emit(augmentedimage)
 
+
+# CALIBRATE USERNAME AND COLOR
+class Setup(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.username = ""
+        self.color = [0,0,0]
+        self.left = 10
+        self.top = 10
+        self.width = 400
+        self.height = 140
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.textbox = QLineEdit(self)
+        self.textbox.move(20,20)
+        self.textbox.resize(280,40)
+
+        self.button = QPushButton('Next', self)
+        self.button.move(20,80)
+
+        self.button.clicked.connect(self.on_click)
+        self.show()
+
+    def getUserName(self):
+        return self.username
+
+    def on_click(self):
+        self.username = self.textbox.text()
+        print(self.username)
+
+
+class Window(QMainWindow):
+
+    def __init__(self):
+        super(Window, self).__init__()
+        self.setGeometry(50, 50, 500, 300)
+        self.setWindowTitle("PyQT tuts!")
+        self.setWindowIcon(QIcon('pythonlogo.png'))
+
+        extractAction = QAction("&GET TO THE CHOPPAH!!!", self)
+        extractAction.setShortcut("Ctrl+Q")
+        extractAction.setStatusTip('Leave The App')
+        extractAction.triggered.connect(self.close_application)
+
+        self.statusBar()
+
+        mainMenu = self.menuBar()
+        fileMenu = mainMenu.addMenu('&File')
+        fileMenu.addAction(extractAction)
+        
+
+        self.home()
+
+    def home(self):
+        btn = QPushButton("Quit", self)
+        btn.clicked.connect(self.close_application)
+        btn.resize(btn.minimumSizeHint())
+        btn.move(0,100)
+
+        extractAction = QAction(QIcon('todachoppa.png'), 'Flee the Scene', self)
+        extractAction.triggered.connect(self.close_application)
+        self.toolBar = self.addToolBar("Extraction")
+        self.toolBar.addAction(extractAction)
+
+        fontChoice = QAction('Font', self)
+        fontChoice.triggered.connect(self.font_choice)
+        #self.toolBar = self.addToolBar("Font")
+        self.toolBar.addAction(fontChoice)
+
+        fontColor = QAction('Font bg Color', self)
+        fontColor.triggered.connect(self.color_picker)
+
+        self.toolBar.addAction(fontColor)
+
+        checkBox = QCheckBox('Enlarge Window', self)
+        checkBox.move(300, 25)
+        checkBox.stateChanged.connect(self.enlarge_window)
+
+        self.progress = QProgressBar(self)
+        self.progress.setGeometry(200, 80, 250, 20)
+
+        self.btn = QPushButton("Download",self)
+        self.btn.move(200,120)
+        self.btn.clicked.connect(self.download)
+
+        #print(self.style().objectName())
+        self.styleChoice = QLabel("Windows Vista", self)
+
+        comboBox = QComboBox(self)
+        comboBox.addItem("motif")
+        comboBox.addItem("Windows")
+        comboBox.addItem("cde")
+        comboBox.addItem("Plastique")
+        comboBox.addItem("Cleanlooks")
+        comboBox.addItem("windowsvista")
+
+        comboBox.move(50, 250)
+        self.styleChoice.move(50,150)
+        comboBox.activated[str].connect(self.style_choice)
+
+        cal = QCalendarWidget(self)
+        cal.move(500,200)
+        cal.resize(200,200)
+
+        self.show()
+
+    def color_picker(self):
+        color = QColorDialog.getColor()
+        self.styleChoice.setStyleSheet("QWidget { background-color: %s}" % color.name())
+
+        
+
+    def font_choice(self):
+        font, valid = QFontDialog.getFont()
+        if valid:
+            self.styleChoice.setFont(font)
+
+
+    def style_choice(self, text):
+        self.styleChoice.setText(text)
+        QApplication.setStyle(QStyleFactory.create(text))
+
+
+    def download(self):
+        self.completed = 0
+
+        while self.completed < 100:
+            self.completed += 0.0001
+            self.progress.setValue(self.completed)
+        
+        
+
+    def enlarge_window(self, state):
+        if state == QtCore.Qt.Checked:
+            self.setGeometry(50,50, 1000, 600)
+        else:
+            self.setGeometry(50, 50, 500, 300)
+        
+
+
+    def close_application(self):
+        choice = QMessageBox.question(self, 'Extract!',
+                                            "Get into the chopper?",
+                                            QMessageBox.Yes | QtGui.QMessageBox.No)
+        if choice == QMessageBox.Yes:
+            print("Extracting Naaaaaaoooww!!!!")
+            sys.exit()
+        else:
+            pass
+
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
 class MainWidget(QWidget):
@@ -357,4 +510,8 @@ class UI:
         sys.exit(self.qapp.exec_())
 
 if __name__ == '__main__':
-    someUI = UI()
+    # someUI = UI()
+    app = QApplication(sys.argv)
+    # ex = Setup()
+    ex = Window()
+    sys.exit(app.exec_())
