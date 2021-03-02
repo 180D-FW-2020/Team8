@@ -57,7 +57,7 @@ class IMUSampleObject:
 
         # sampling paramaters
         self.window_length = window_length #number of Samples
-        self.length_sample = 6
+        self.length_sample = 14
         self.classifier    = classifier
         self.data    = [None]*self.length_sample*window_length
         self.reading = [None]*self.length_sample*(window_length-overlap)
@@ -259,12 +259,34 @@ class IMUSampleObject:
             # apply result to mqtt link
             self.__update_server(result)
 
-
     def run(self):
         self.a = datetime.datetime.now()
         while True:
            self.sample()
 
+    def create_database(self, number_of_readings :int, data_frame = None):
+        data = pd.DataFrame()
+        if data_frame:
+            data = data_frame
+
+        for label, gesture in enumerate(self.classifier.gest_dict):
+            print("Generating " + gesture + " database:")
+            for reading in range(number_of_readings):
+                print("Reading " + str(reading) + "...")
+                for each_sample in range(self.window_length):
+
+                    sample = self.__get_filtered_values()
+        
+                    for i in range(self.length_sample):
+                        self.reading[each_sample*self.length_sample + i] = sample[i]
+
+                self.reading = np.insert(self.reading,0, label)
+                df = pd.DataFrame([self.reading], columns=np.arange(self.window_length*self.length_sample+1))
+                data = data.append(df, ignore_index=True)
+        return data
+
+
+        
 def kalmanFilterY ( accAngle, gyroRate, DT):
     y=0.0
     S=0.0
