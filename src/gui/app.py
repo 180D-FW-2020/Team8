@@ -116,7 +116,7 @@ class DisplayWidget(QWidget):
     def setImage(self, image):
         # self.processMasks()
         self.image = self._array2qimage(image)
-        self.image = self.image.scaled(DRESW*4, DRESH*4, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image = self.image.scaled(int(DRESW*0.75), int(DRESH*0.75), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.setFixedSize(self.image.size())
         # print(self.image.size())
         self.update()
@@ -167,8 +167,10 @@ class MainWidget(QWidget):
     returnSignal = pyqtSignal()
     messageSignal = pyqtSignal()
     
-    def __init__(self, parent=None):
+    def __init__(self, screensize, parent=None):
         super().__init__(parent)
+        global DRESW,DRESH
+        DRESW,DRESH = screensize
 
         # MainWidget Object Members
         self.timer = QTimer(self)
