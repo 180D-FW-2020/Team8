@@ -313,7 +313,7 @@ class Setup(QWidget):
         self.button.move(20,80)
         self.button.clicked.connect(self.color_picker)
 
-        self.button = QPushButton('Next', self)
+        self.button = QPushButton('Username', self)
         self.button.move(120,80)
         self.button.clicked.connect(self.on_click)
 
@@ -324,6 +324,9 @@ class Setup(QWidget):
     def getUserName(self):
         return self.username
 
+    def getRGB(self):
+        return self.color
+
     def on_click(self):
         self.username = self.textbox.text()
         print(self.getUserName())
@@ -331,6 +334,12 @@ class Setup(QWidget):
     def color_picker(self):
         color = QColorDialog.getColor()
         self.styleChoice.setStyleSheet("QWidget { background-color: %s}" % color.name())
+        self.color = self.hex_to_rgb(color.name())
+
+    def hex_to_rgb(self, value):
+        value = value.lstrip('#')
+        lv = len(value)
+        return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
 # @desc
 # widget that instantiates all other widgets, sets layout, and connects signals to slots
@@ -403,5 +412,4 @@ if __name__ == '__main__':
     # someUI = UI()
     app = QApplication(sys.argv)
     ex = Setup()
-    #ex = Window()
     sys.exit(app.exec_())
