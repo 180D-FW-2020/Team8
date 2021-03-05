@@ -283,6 +283,7 @@ class IMUSampleObject:
                 self.reading = np.insert(self.reading,0, label)
                 df = pd.DataFrame([self.reading], columns=np.arange(self.window_length*self.length_sample+1))
                 data = data.append(df, ignore_index=True)
+                print("Finished reading sample" + str(reading))
                 time.sleep(1)
         return data
 
