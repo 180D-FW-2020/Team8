@@ -309,15 +309,16 @@ class Setup(QWidget):
         self.textbox.move(20,20)
         self.textbox.resize(280,40)
 
-        self.button = QPushButton('Color', self)
+        self.button = QPushButton('Set Color', self)
         self.button.move(20,80)
         self.button.clicked.connect(self.color_picker)
 
-        self.button = QPushButton('Username', self)
+        self.button = QPushButton('Set Username', self)
         self.button.move(120,80)
         self.button.clicked.connect(self.on_click)
 
         self.styleChoice = QLabel("Color", self)
+        self.styleChoice.move(20,0)
 
         self.show()
 
