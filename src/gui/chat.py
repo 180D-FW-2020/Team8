@@ -212,7 +212,7 @@ class BoardOverlay(QObject):
         global HOMOGRAPHY
         if HOMOGRAPHY.shape[0] != 3: # initialize accumulated homography matrix
             HOMOGRAPHY = matrix
-        HOMOGRAPHY = cv.accumulateWeighted(matrix, HOMOGRAPHY, 0.3) # moving avg of past 5 frames
+        HOMOGRAPHY = cv.accumulateWeighted(matrix, HOMOGRAPHY, 0.25) # moving avg of past 4 frames
 
         points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
         dst = cv.perspectiveTransform(points, HOMOGRAPHY)
