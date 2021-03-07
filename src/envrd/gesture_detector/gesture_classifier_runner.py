@@ -221,22 +221,25 @@ class IMUSampleObject:
         roll = -math.asin(accYnorm/math.cos(pitch))
 
 
-        if 1:                       #Change to '0' to stop showing the angles from the accelerometer
-            outputString += "#  ACCX Angle %5.2f ACCY Angle %5.2f  #  " % (AccXangle, AccYangle)
-
-        if 1:                       #Change to '0' to stop  showing the angles from the gyro
-            outputString +="\t# GRYX Angle %5.2f  GYRY Angle %5.2f  GYRZ Angle %5.2f # " % (self.gyroXangle,self.gyroYangle,self.gyroZangle)
-
-        if 1:                       #Change to '0' to stop  showing the angles from the complementary filter
-            outputString +="\t#  CFangleX Angle %5.2f   CFangleY Angle %5.2f  #" % (self.CFangleX,self.CFangleY)
-
-
-        if 1:                       #Change to '0' to stop  showing the angles from the Kalman filter
-            outputString +="# kalmanX %5.2f   kalmanY %5.2f #" % (self.kalmanX,self.kalmanY)
+        #if 1:                       #Change to '0' to stop showing the angles from the accelerometer
+        #    outputString += "#  ACCX Angle %5.2f ACCY Angle %5.2f  #  " % (AccXangle, AccYangle)
+#
+#        if 1:                       #Change to '0' to stop  showing the angles from the gyro
+#            outputString +="\t# GRYX Angle %5.2f  GYRY Angle %5.2f  GYRZ Angle %5.2f # " % (self.gyroXangle,self.gyroYangle,self.gyroZangle)
+#
+#        if 1:                       #Change to '0' to stop  showing the angles from the complementary filter
+#            outputString +="\t#  CFangleX Angle %5.2f   CFangleY Angle %5.2f  #" % (self.CFangleX,self.CFangleY)
+#
+#
+#        if 1:                       #Change to '0' to stop  showing the angles from the Kalman filter
+#            outputString +="# kalmanX %5.2f   kalmanY %5.2f #" % (self.kalmanX,self.kalmanY)
 
 
         # Enforce sampling period--maybe do this outside of this function
-        time_remaining = self.sample_period - (datetime.datetime.now()-self.c)
+        time_remaining = self.sample_period - ((datetime.datetime.now()-self.c).microseconds)/(1000000*1.0)
+        print(time_remaining)
+        if(time_remaining <0):
+            time_remaining = 0
         time.sleep(time_remaining)
         return [AccXangle, AccYangle,self.gyroXangle,self.gyroYangle,self.gyroZangle,self.CFangleX,self.CFangleY,self.kalmanX,self.kalmanY, pitch, roll,ACCx,ACCy,ACCz]
 
@@ -270,7 +273,7 @@ class IMUSampleObject:
             data = data_frame
 
         for label, gesture in enumerate(self.classifier.gest_dict):
-            print("Generating " + gesture + " database:")
+            print("Generating " + self.classifier.gest_dict[label] + " database:")
             for reading in range(number_of_readings):
                 print("Reading " + str(reading) + "...")
                 for each_sample in range(self.window_length):
@@ -278,13 +281,17 @@ class IMUSampleObject:
                     sample = self.__get_filtered_values()
         
                     for i in range(self.length_sample):
-                        self.reading[each_sample*self.length_sample + i] = sample[i]
+                        self.data[each_sample*self.length_sample + i] = sample[i]
 
-                self.reading = np.insert(self.reading,0, label)
-                df = pd.DataFrame([self.reading], columns=np.arange(self.window_length*self.length_sample+1))
+                labeled_data = np.insert(self.data,0, label)
+                df = pd.DataFrame([labeled_data], columns=np.arange(self.window_length*self.length_sample+1))
                 data = data.append(df, ignore_index=True)
-                print("Finished reading sample" + str(reading))
+                print("Finished reading sample " + str(reading))
                 time.sleep(1)
+                # timer reset
+                self.a = datetime.datetime.now()
+                self.b = datetime.datetime.now()
+                self.c = datetime.datetime.now()
         return data
 
 
@@ -361,6 +368,7 @@ def kalmanFilterX ( accAngle, gyroRate, DT):
     return KFangleX
 
 if __name__ == "__main__":
+    print("compiled")
     include_labels = [0, 1]
     window_length = 100
     overlap = 50
@@ -371,5 +379,3 @@ if __name__ == "__main__":
     gestures = ["left_swipe", "garbage"]
     runner = IMUSampleObject(len(include_labels),window_length,overlap, sample_period,weights_file,bias_file, user, gestures)
     runner.run()
-
-

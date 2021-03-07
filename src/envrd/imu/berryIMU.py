@@ -90,7 +90,7 @@ def handleIMU(mqtt_test, action, reciever):
     if action != last_state or not action: 
         now = datetime.datetime.now()
         msg = {
-                "message_type" : "gesture",
+                "message_type" : "gesture1",
                 "sender" : mqtt_test._MQTTLink__user,
                 "reciever" : reciever,
                 "data" : action,
@@ -437,7 +437,7 @@ def runIMU(mqtt_test, reciever):
             handleIMU(mqtt_test, "", reciever) # just send acks
 
 if __name__ == "__main__": 
-    reciever = "my_name"
+    reciever = "tommy"
     user = "raspberry_controller_" + reciever
     mqtt_test = mqtt.MQTTLink("ece180d/MEAT/general/gesture", user)
     runIMU(mqtt_test,reciever)
