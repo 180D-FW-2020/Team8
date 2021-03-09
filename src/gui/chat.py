@@ -176,6 +176,15 @@ class BoardManager(QObject):
             list_en.append(board["link"].listen)
         return list_en
 
+    def setUser(self, username):
+        self.user = username
+    
+    def setColor(self, colour):
+        self.color = colour
+
+    def setBoards(self, chats):
+        self.boards = chats
+
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
     def __init__(self, topic='general', parent=None):
