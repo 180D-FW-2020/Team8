@@ -59,7 +59,7 @@ class soft_SVM_trainer:
                 b = cp.Variable(1)
                 En = cp.Variable(X_subset.shape[0])
                 # objective = cp.Minimize(0.5 * cp.sum_squares(c) + 0.1*cp.norm(En, 1)) # detmine if using SVM
-                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 100000*cp.norm(En, 1)) # detmine if using SVM
+                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 0.1*cp.norm(En, 1)) # detmine if using SVM
                 constraints = [cp.multiply(Y, ((X_subset @ c) + b)) >= 1-En, En >= 0]  # detmine if using SVM
                 prob = cp.Problem(objective, constraints)
                 prob.solve(solver=cp.ECOS, max_iters=200, verbose=True)
@@ -119,3 +119,75 @@ def build_allocation_matrix(n):
     else:
         return np.block([[np.ones((1,n-1)), np.zeros((1,(n-1)*(n-2)//2))],
                         [-np.eye(n-1), build_allocation_matrix(n-1)]])
+
+
+if __name__ == "__main__":
+
+     # import datasets
+    data_pd  = pd.read_csv("data/gesture/training_data/new_meat_database.csv")
+    data = data_pd.to_numpy()
+    train_dat = data[0:799,:]
+    test_dat  = data[800:,:]
+
+    training_data_only = train_dat[:,2:]
+    training_labels_only = train_dat[:,1]
+    testing_data_only = test_dat[:,2:]
+    testing_labels_only = test_dat[:,1]
+    
+    # keep certain labels
+    include_labels = [0, 1]
+    K = len(include_labels)
+    
+    
+    # try to classify without training
+    w_pass = False
+    W_pass = False
+    Ww_pass = False 
+    try:  # empty W and w
+        failed_classifier = soft_SVM_trainer(K, training_data_only.shape[1])
+        failed_classifier.f(failed_classifier.classify(testing_data_only))
+    except ValueError:
+        Ww_pass = True
+        print('Training check all empty: pass.')
+    try:  # empty W only
+        failed_classifier = soft_SVM_trainer(K, training_data_only.shape[1])
+        failed_classifier.w = [0]
+        failed_classifier.f(failed_classifier.classify(testing_data_only))
+    except ValueError:
+        W_pass = True
+        print('Training check W empty: pass.')
+    try:  # empty w only
+        failed_classifier = soft_SVM_trainer(K, training_data_only.shape[1])
+        failed_classifier.W = [0]
+        failed_classifier.f(failed_classifier.classify(testing_data_only))
+    except ValueError:
+        w_pass = True
+        print('Training check w empty: pass.')
+        
+    assert(Ww_pass and W_pass and w_pass)
+    print('All checks pass.')
+    
+    # create and train classifier
+    classifier = soft_SVM_trainer(K, training_data_only.shape[1])
+    train_from_file = False
+    if train_from_file:
+        classifier.W = [np.loadtxt('weights_14.csv')]
+        classifier.w = [np.loadtxt('bias_14.csv')]
+        classifier.train(training_data_only, training_labels_only, backdoor=True)
+    else:
+        classifier.train(training_data_only, training_labels_only)
+    
+    # test classifier
+    reg_dat = testing_data_only
+    predicted = classifier.f(classifier.classify(testing_data_only))
+
+    # compute accuracy
+    accuracy = np.sum(np.equal(predicted, testing_labels_only))/predicted.shape[0]
+    print(f"Accuracy = {accuracy}")
+
+    # save results
+    save_results = False
+    if save_results:
+        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_coeffs.csv', classifier.W[0])
+        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_bias.csv', classifier.w[0])
+        print('Results saved.')
