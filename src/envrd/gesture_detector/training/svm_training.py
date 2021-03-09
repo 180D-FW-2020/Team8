@@ -59,7 +59,7 @@ class soft_SVM_trainer:
                 b = cp.Variable(1)
                 En = cp.Variable(X_subset.shape[0])
                 # objective = cp.Minimize(0.5 * cp.sum_squares(c) + 0.1*cp.norm(En, 1)) # detmine if using SVM
-                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 0.1*cp.norm(En, 1)) # detmine if using SVM
+                objective = cp.Minimize(0.5 * cp.norm(c, 1) + 10*cp.norm(En, 1)) # detmine if using SVM
                 constraints = [cp.multiply(Y, ((X_subset @ c) + b)) >= 1-En, En >= 0]  # detmine if using SVM
                 prob = cp.Problem(objective, constraints)
                 prob.solve(solver=cp.ECOS, max_iters=200, verbose=True)
@@ -186,8 +186,8 @@ if __name__ == "__main__":
     print(f"Accuracy = {accuracy}")
 
     # save results
-    save_results = False
+    save_results = True
     if save_results:
-        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_coeffs.csv', classifier.W[0])
-        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_bias.csv', classifier.w[0])
+        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_coeffs.csv', classifier.W[0],delimiter=",")
+        np.savetxt('data/gesture/classifier_coeffs/ls_classifier_bias.csv', classifier.w[0], delimiter=",")
         print('Results saved.')
