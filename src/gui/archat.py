@@ -122,7 +122,8 @@ class ARChat():
 
     # message overflow processing
     def process_msg(self, message, lim):
-        for i in range(lim, 0, -1):
+        for i in range(lim-1, 0, -1):
+            print(i)
             if(message[i] == ' '):
                 return (message[:i], message[i+1:])
 
@@ -163,7 +164,7 @@ if __name__ == '__main__':
     chat2 = ARChat("chat2", 1, masterRooms)
     chat3 = ARChat("chat3", 2, masterRooms)
 
-    chat1.post("Nico", "this is a tester message", [255,124,255], {"hour": 12, "minute": 31, "second": 22})
+    chat1.post("Nico", "some bullshit hey this is a bullshit space", [255,124,255], {"hour": 12, "minute": 31, "second": 22})
     chat1.post("Nate", "this is a tester message really long please overflow due to character count", [0,0,255], {"hour": 12, "minute": 32, "second": 11})
     chat1.post("Tommy", "this is a tester message again", [255,0,0], {"hour": 12, "minute": 33, "second": 1})
     chat1.stage("I don't think this overflow works as intended yet so why don't I keep testing this stuff and see when it breaks")
