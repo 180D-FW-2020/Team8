@@ -176,11 +176,11 @@ class MainWidget(QWidget):
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = chat.BoardManager(user='John')
+        self.manager = chat.BoardManager(user='Nico')
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        self.gesturer = net.MQTTIMUObject(user='John')
+        self.gesturer = net.MQTTIMUObject(user='Nico')
 
         self.layout = QGridLayout()
         self.threadpool = QThreadPool()
@@ -242,6 +242,7 @@ class MainWidget(QWidget):
 
     def __constant_workers__(self):
         self.timer.start(DINTERVAL)
+        self.__create_worker__(self.manager.sendConstant)
         self.__create_worker__(self.video.captureFrames)
         self.__create_worker__(self.listener.speechHandler)
         self.__create_worker__(self.manager.link.listen)

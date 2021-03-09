@@ -17,6 +17,7 @@ import cv2 as cv
 import mqtt_net as mqtt
 import archat
 import numpy as np
+import time as t
 from datetime import datetime as time
 import stringparser
 
@@ -150,7 +151,7 @@ class BoardManager(QObject):
         self.text = self.__parse__(message)
         self.emoji.emit(self.text[1])
 
-    def send(self):
+    def send(self, blank=False):
         chat = self.chats[self.board]
         time = self.__time__()
         message, emojis = self.text
@@ -167,6 +168,12 @@ class BoardManager(QObject):
         chat.stage('')
         chat.post(self.user, message, self.color, time)
         print('sending: ' + message)
+
+    def sendConstant(self):
+        while True:
+            t.sleep(1)
+            link.send()
+            
 
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
