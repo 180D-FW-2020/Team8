@@ -17,6 +17,7 @@ import cv2 as cv
 import mqtt_net as mqtt
 import archat
 import numpy as np
+import time as t
 from datetime import datetime as time
 import stringparser
 
@@ -153,22 +154,30 @@ class BoardManager(QObject):
         print(self.text[1])
         self.emoji.emit(self.text[1])
 
-    def send(self):
-        link = self.boards[self.topic]['link']
-        chat = self.boards[self.topic]['chat']
-        time = self.__time__()
-        message, emojis = self.text
-        datapacket = {
-            "message_type" : "text",
-            "sender" : self.user,
-            "data" : message,
-            "time" : time,
-            "color": self.color, 
-            "emoji": emojis
-        }
-        link.send(datapacket)
-        chat.stage('')
-        chat.post(self.user, message, self.color, time)
+    def send(self, blank=False):
+        if blank:
+            link.send()
+        else:
+            link = self.boards[self.topic]['link']
+            chat = self.boards[self.topic]['chat']
+            time = self.__time__()
+            message, emojis = self.text
+            datapacket = {
+                "message_type" : "text",
+                "sender" : self.user,
+                "data" : message,
+                "time" : time,
+                "color": self.color, 
+                "emoji": emojis
+            }
+            link.send(datapacket)
+            chat.stage('')
+            chat.post(self.user, message, self.color, time)
+
+    def sendConstant(self):
+        while True:
+            t.sleep(1)
+            self.send(blank=True)
          
     def listen(self):
         list_en = []
