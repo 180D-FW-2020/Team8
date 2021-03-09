@@ -41,6 +41,7 @@ import mqtt
 import speech 
 import chat
 import animations 
+import calibrate
 
 from fsm import *
 
@@ -183,6 +184,7 @@ class MainWidget(QWidget):
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
         self.gesturer = net.MQTTIMUObject(user='Nico')
+        self.setup = calibrate.Setup()
 
         self.layout = QGridLayout()
         self.threadpool = QThreadPool()
