@@ -98,8 +98,9 @@ class BoardManager(QObject):
         self.link = mqtt.MQTTLink(topic='ece180d/MEAT', user_id=user, color=color)
         self.chats = {}
 
+        # create the general board
         self.createBoard(self.board)
-        self.stage(' ')
+        self.stage('')
 
         self.link.message.connect(lambda message: self.__receive__(message))
 

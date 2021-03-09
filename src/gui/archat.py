@@ -113,7 +113,7 @@ class ARChat():
     Returns a path to the saved ARChat .png
     '''
     def getPath(self):
-        return str(self.boardpath)
+        return self.boardpath
 
     def addRoom(self, topic):
         self.rooms.append(topic)
