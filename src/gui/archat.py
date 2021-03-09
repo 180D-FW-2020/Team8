@@ -110,10 +110,10 @@ class ARChat():
 
 
     '''
-    Returns a path to the saved ARChat .png
+    Returns a path to the saved ARChat .jpg
     '''
     def getPath(self):
-        return str(self.boardpath)
+        return ROOT + self.boardpath
 
     def addRoom(self, topic):
         self.rooms.append(topic)
@@ -137,11 +137,11 @@ class ARChat():
             else:
                 cv.putText(im, message[0] + message[1], (int(im.shape[1]/4), im.shape[0]-200-80*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, message[2], 2, cv.LINE_AA)
             index += 1
-        cv.imwrite(str(self.getPath()) + '.png', im)
+        cv.imwrite(str(self.getPath()) + '.jpg', im)
 
     # post message rooms to chatboard
     def write_rooms(self):
-        im = cv.imread(str(self.getPath()) + '.png', 1)
+        im = cv.imread(str(self.getPath()) + '.jpg', 1)
         index = 0
         for room in self.rooms:
             cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,255,255), 2, cv.LINE_AA)
@@ -149,13 +149,13 @@ class ARChat():
                 cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,0,255), 20, cv.LINE_AA)
                 cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,255,255), 2, cv.LINE_AA)
             index += 1
-        cv.imwrite(str(self.getPath()) + '.png', im)
+        cv.imwrite(str(self.getPath()) + '.jpg', im)
 
     # post queued message to chatboard
     def write_staged_message(self, index=0):
-        im = cv.imread(str(self.getPath()) + '.png', 1)
+        im = cv.imread(str(self.getPath()) + '.jpg', 1)
         cv.putText(im, self.stagedMessage, (int(im.shape[1]/4), im.shape[0]-90+50*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, [255,255,255], 2, cv.LINE_AA)
-        cv.imwrite(str(self.getPath()) + '.png', im)
+        cv.imwrite(str(self.getPath()) + '.jpg', im)
 
 if __name__ == '__main__':
     masterRooms = ["chat1", "chat2", "chat3"]

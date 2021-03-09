@@ -94,7 +94,7 @@ class BoardManager(QObject):
         self.color = color
         self.text = ""
         self.topic = "general"
-        self.boards = {}
+        self.boards = {} 
 
         self.createBoard(self.topic)
         self.stage(' ')
@@ -175,6 +175,12 @@ class BoardManager(QObject):
         for board in self.boards.values():
             list_en.append(board["link"].listen)
         return list_en
+
+    def setUser(self, username):
+        self.user = username
+    
+    def setColor(self, colour):
+        self.color = colour
 
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
