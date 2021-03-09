@@ -37,11 +37,14 @@ overlap = 25
 sample_freq = 30 #samples per second
 username = ""
 
+# Recording Paramaters
+samples_taken = 100
+
 # initialize classifier and runner
 classifier = GestClassifier(len(classes), readings_per_sample*num_samples,coefficients_file,bias_file,\
         np.arange(len(classes)),classes)
 runner = IMUSampleObject(classifier,window_length,overlap,sample_freq,username)
 
 # create database
-data = runner.create_database(10)
+data = runner.create_database(samples_taken)
 data.to_csv(data_file, mode='a', header=False)

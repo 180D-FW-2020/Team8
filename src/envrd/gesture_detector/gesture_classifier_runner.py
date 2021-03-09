@@ -237,7 +237,7 @@ class IMUSampleObject:
 
         # Enforce sampling period--maybe do this outside of this function
         time_remaining = self.sample_period - ((datetime.datetime.now()-self.c).microseconds)/(1000000*1.0)
-        print(time_remaining)
+        #print(time_remaining)
         if(time_remaining <0):
             time_remaining = 0
         time.sleep(time_remaining)
