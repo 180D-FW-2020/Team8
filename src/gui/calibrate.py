@@ -20,9 +20,7 @@ DINTERVAL = round(1000/DRATE) # frame refresh interval in msec
 
 # CALIBRATE
 class Setup(QWidget):
-    usernameSignal = pyqtSignal(str)
-    colorSignal = pyqtSignal(tuple)
-    chatroomsSignal = pyqtSignal(list)
+    nextSignal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -116,9 +114,10 @@ class Setup(QWidget):
         print(self.getUserName())
         print(self.getRGB())
         print(self.getChatrooms())
-        self.usernameSignal.emit(self.getUserName())
-        self.colorSignal.emit(self.getRGB())
-        self.chatroomsSignal.emit(self.getChatrooms())
+        self.nextSignal.emit()
+        # self.usernameSignal.emit(self.getUserName())
+        # self.colorSignal.emit(self.getRGB())
+        # self.chatroomsSignal.emit(self.getChatrooms())
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
