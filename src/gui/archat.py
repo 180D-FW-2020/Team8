@@ -123,7 +123,6 @@ class ARChat():
     # message overflow processing
     def process_msg(self, message, lim):
         for i in range(lim-1, 0, -1):
-            print(i)
             if(message[i] == ' '):
                 return (message[:i], message[i+1:])
 
