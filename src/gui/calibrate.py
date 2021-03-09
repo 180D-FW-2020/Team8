@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import *
 import threading
 
 
-DRESW = 1280 # resolution width
-DRESH = 720 # res height
+DRESW = 640 # resolution width
+DRESH = 480 # res height
 DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
@@ -20,18 +20,21 @@ DINTERVAL = round(1000/DRATE) # frame refresh interval in msec
 
 # CALIBRATE
 class Setup(QWidget):
+    usernameSignal = pyqtSignal(str)
+    colorSignal = pyqtSignal(tuple)
+    chatroomsSignal = pyqtSignal(list)
+
     def __init__(self):
         super().__init__()
         self.username = ""
-        self.color = [0,0,0]
+        self.color = (0,0,0)
         self.chatrooms = []
         self.left = 420
         self.top = 420
         self.width = 420
         self.height = 360
-        self.initUI()
 
-    def initUI(self):
+    def init(self):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.userlabel = QLabel("Enter Your Username (max 14 characters)", self)
@@ -110,12 +113,15 @@ class Setup(QWidget):
         return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
     
     def next_step(self):
-        # move to video feed and pass data to board
         print(self.getUserName())
         print(self.getRGB())
         print(self.getChatrooms())
+        self.usernameSignal.emit(self.getUserName())
+        self.colorSignal.emit(self.getRGB())
+        self.chatroomsSignal.emit(self.getChatrooms())
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Setup()
+    ex.init()
     sys.exit(app.exec_())
