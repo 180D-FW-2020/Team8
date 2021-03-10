@@ -109,7 +109,7 @@ class IMUSampleObject:
         self.c = datetime.datetime.now()
 
     def __update_server(self, action: str):
-        if (datetime.datetime.now()-self.last_classification_time < (self.window_length/self.overlap)*(self.window_length/self.sample_freq) and \
+        if ((datetime.datetime.now()-self.last_classification_time).microseconds/(1000000*1.0) < (self.window_length/self.overlap)*(self.window_length/self.sample_freq) and \
             self.last_classification == action):
 
             self.last_classification = action
