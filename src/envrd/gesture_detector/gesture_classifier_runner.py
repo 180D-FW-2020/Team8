@@ -71,6 +71,8 @@ class IMUSampleObject:
         self.user = "raspberry_controller_" + username
         self.mqtt_server = mqtt.MQTTLink( self.board, self.user)
         self.designated_reciever = username
+        self.last_classification = ""
+        self.last_classification_time = datetime.datetime.now()
 
         #initialize sensor
         IMU.detectIMU()
@@ -107,6 +109,15 @@ class IMUSampleObject:
         self.c = datetime.datetime.now()
 
     def __update_server(self, action: str):
+        if (datetime.datetime.now()-self.last_classification_time < (self.window_length/self.overlap)*(self.window_length/self.sample_freq) and \
+            self.last_classification == action):
+
+            self.last_classification = action
+            self.last_classification_time = datetime.datetime.now()
+            return
+
+        self.last_classification = action
+        self.last_classification_time = datetime.datetime.now()
         if action != "garbage":
             now = datetime.datetime.now()
             msg = {
