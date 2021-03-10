@@ -36,4 +36,4 @@ class GestClassifier:
         Returns:
         - string label corresponding to label of most probable classification
         '''
-        return self.gest_dict[self.__classify(data)]
+        return self.gest_dict[self.__classify(data)[0]]
