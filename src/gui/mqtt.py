@@ -73,8 +73,5 @@ class MQTTIMUObject(mqtt.MQTTLink):
                 if msg["data"] is "up":
                     self.gestup.emit(True)
                 elif msg["data"] is "down":
-                    self.gestup.emit(False)
-        
-
-                     
+                    self.gestup.emit(False)            
             

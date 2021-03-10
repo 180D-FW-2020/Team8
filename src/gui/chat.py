@@ -177,6 +177,12 @@ class BoardManager(QObject):
             t.sleep(1)
             link.send()
             
+    def setUser(self, username):
+        self.user = username
+        self.link.setUser(username)
+    
+    def setColor(self, colour):
+        self.color = colour
 
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)

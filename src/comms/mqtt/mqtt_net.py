@@ -187,7 +187,6 @@ class MQTTLink(QObject):
             time.sleep(duration)
             self.rx.loop_stop()
         
-
     def send(self, message : dict = {}):
         '''
         Sends a message or list of messages over the board to which it is subscribed
@@ -211,4 +210,6 @@ class MQTTLink(QObject):
         self.tx.publish(self.topic, json.dumps(self.__data_packet), qos=1)
         self.tx.loop_stop()
 
+    def setUser(self, user):
+        self.__user = user
     
