@@ -33,11 +33,8 @@ class SpeechRecognizer:
 
     def listenForPhrases(self):
         with self.audio_source as source:
-            try:
-                while True:
-                    self._recognize(self.recog.listen(source))
-            except KeyboardInterrupt:
-                break
+            while True:
+                self._recognize(self.recog.listen(source))
         print("audio teardown")
 
     def addKeyphrase(self, keyphrase):
