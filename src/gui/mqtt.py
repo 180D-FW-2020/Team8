@@ -30,7 +30,7 @@ DELIM = "slash"
 sys.path.append("src/comms/mqtt")
 sys.path.append("src/gui")
 
-import mqtt_link as mqtt
+import mqtt_basic as mqtt
 import stringparser
 
 class MQTTNetObject(mqtt.MQTTLink):

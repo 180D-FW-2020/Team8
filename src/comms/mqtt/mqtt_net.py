@@ -90,7 +90,6 @@ class MQTTLink(QObject):
 
         self.send()
 
-
     def __del__(self):
         self.tx.disconnect()
         self.rx.disconnect()

@@ -260,12 +260,12 @@ class MainWidget(QWidget):
 
     def __constant_workers__(self):
         self.timer.start(DINTERVAL)
-        self.__create_worker__(self.manager.sendConstant)
-        self.__create_worker__(self.video.captureFrames)
-        self.__create_worker__(self.listener.speechHandler)
-        self.__create_worker__(self.manager.link.listen)
-        self.__create_worker__(self.__print_phrases__)
-        self.__create_worker__(self.gesturer.link.listen)
+        self.__create_worker__(self.manager.sendConstant)       # constantly sends out info
+        self.__create_worker__(self.video.captureFrames)        # constantly captures frames
+        self.__create_worker__(self.listener.speechHandler)     # constantly listens
+        self.__create_worker__(self.manager.link.listen)        # constantly mqtt listening
+        self.__create_worker__(self.__print_phrases__)          # constantly printing PHRASES
+        self.__create_worker__(self.gesturer.link.listen)       # constantly mqtt listening (gesturer)
 
     def __phrase_rec__(self, phrase):
         if phrase in PHRASES:

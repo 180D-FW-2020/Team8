@@ -14,7 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import cv2 as cv
 
-import mqtt_net as mqtt
+import mqtt_basic as mqtt
 import archat
 import numpy as np
 import time as t
