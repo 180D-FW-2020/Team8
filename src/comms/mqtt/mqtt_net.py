@@ -177,7 +177,7 @@ class MQTTLink(QObject):
         '''
         if duration == -1:
             self.listen_called = True
-            self.rx.loop_start() # changed from loop forever so nonblocking thread
+            self.rx.loop_forever() # changed from loop forever so nonblocking thread
         else:
             self.rx.loop_start()
             time.sleep(duration)
