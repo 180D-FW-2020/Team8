@@ -203,6 +203,7 @@ class MQTTLink(QObject):
                 self.__addMessage__(message)
             else:
                 raise TypeError('Unknown message type not supported; try formatting to dictionary')
+        print(json.dumps(self.__data_packet))
         self.tx.publish(self.topic, json.dumps(self.__data_packet), qos=1)
         self.tx.loop_stop()
 

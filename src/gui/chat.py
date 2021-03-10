@@ -170,7 +170,6 @@ class BoardManager(QObject):
         self.link.send(datapacket)
         chat.stage('')
         chat.post(self.user, message, self.color, time)
-        print('sending: ' + message)
 
     def sendConstant(self):
         while True:
@@ -255,5 +254,3 @@ class BoardOverlay(QObject):
         if len(matches) > 250:
             return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
         return image
-
-    
