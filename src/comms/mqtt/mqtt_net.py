@@ -17,6 +17,7 @@ class MQTTLink(QObject):
         - message: a received message that is triggered upon message receive 
     '''
     message = pyqtSignal(dict)
+    disconnect = pyqtSignal()
 
     ## Privates #######################################################################################################
 
@@ -28,7 +29,8 @@ class MQTTLink(QObject):
     
     def __on_disconnect_subscriber__(self, client, userdata, rc):
         if rc != 0:
-            print('Unexpected Disconnect')
+            print('Unexpected Disconnect' + str(rc))
+            self.disconnect.emit()
         else:
             print('Expected Disconnect')
     
@@ -37,7 +39,8 @@ class MQTTLink(QObject):
     
     def __on_disconnect_publisher__(self, client, userdata, rc):
         if rc != 0:
-            print('Unexpected Disconnect')
+            print('Unexpected Disconnect' + str(rc))
+            self.disconnect.emit()
         else:
             print('Expected Disconnect')
 

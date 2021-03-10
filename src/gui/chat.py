@@ -95,14 +95,17 @@ class BoardManager(QObject):
         self.color = color
         self.text = ""
         self.board = "general"
-        self.link = mqtt.MQTTLink(topic='ece180d/MEAT', user_id=user, color=color)
         self.chats = {}
+
+        # set up the link
+        self.__link__()
 
         # create the general board
         self.createBoard(self.board)
         self.stage('')
 
         self.link.message.connect(lambda message: self.__receive__(message))
+        self.link.disconnect.connect(self.__link__)
 
     def __time__(self):
         now = time.now()
@@ -119,6 +122,9 @@ class BoardManager(QObject):
 
         chat.post(user, text, color, time)
         self.emoji.emit(emojis)
+
+    def __link__(self):
+        self.link = mqtt.MQTTLink(topic='ece180d/MEAT', user_id=self.user, color=self.color)
 
     def __parse__(self, message):
         text, emojis = stringparser.parse_string(message, DELIM, EMOTEIDS)
