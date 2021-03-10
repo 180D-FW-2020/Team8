@@ -37,7 +37,8 @@ class SpeechRecognizer:
                 while True:
                     self._recognize(self.recog.listen(source))
             except KeyboardInterrupt:
-                return
+                break
+        print("audio teardown")
 
     def addKeyphrase(self, keyphrase):
         if keyphrase not in self._phrases:
