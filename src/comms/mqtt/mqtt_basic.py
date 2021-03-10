@@ -85,7 +85,8 @@ class MQTTLink(QObject):
         Inputs:
             - message: a received json string
         '''
-        self.message.emit(message)
+        if message['sender'] != self.user:
+            self.message.emit(message)
 
     ## Public #######################################################################################################
         
