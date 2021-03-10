@@ -24,7 +24,7 @@ import stringparser
 ## Globals #######################################################################################################
 ## a list of globals used in this file
 
-DELIM = "slash"
+DELIM = "/"
 TOPICPREF = "ece180d/MEAT/"
 ROOT = "data/gui/"
 EMOTEIDS = {
