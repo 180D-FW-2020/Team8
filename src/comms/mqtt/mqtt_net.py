@@ -141,8 +141,7 @@ class MQTTLink(QObject):
             if packet["senderID"] not in self.__last_received_msg_IDS:
                 self.__last_received_msg_IDS[packet["senderID"]]= []
                 self.__network_users[packet["senderID"]] = {
-                                                            "color":packet["senderColor"],
-                                                            "emoji": packet["senderEmojiImage"]
+                                                            "color":packet["senderColor"]
                                                         }
             for msg in packet["messages"]:
                 if msg["ID"] not in self.__last_received_msg_IDS[packet["senderID"]]:
