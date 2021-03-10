@@ -368,14 +368,15 @@ def kalmanFilterX ( accAngle, gyroRate, DT):
     return KFangleX
 
 if __name__ == "__main__":
-    print("compiled")
     include_labels = [0, 1]
-    window_length = 100
-    overlap = 50
-    sample_period = 1/window_length
-    weights_file = "../../../data/gesture/classifier_coeffs/left_swipe_classifier_coeffs.csv"
-    bias_file = "../../../data/gesture/classifier_coeffs/left_swipe_classifier_bias.csv"
-    user = "tommy"
+    window_length = 50
+    overlap = 25
+    sample_freq = 30
+    sample_size = 14
+    weights_file = "../../../data/gesture/classifier_coeffs/ls_classifier_coeffs.csv"
+    bias_file =    "../../../data/gesture/classifier_coeffs/ls_classifier_bias.csv"
+    user = "tommy_rpi"
     gestures = ["left_swipe", "garbage"]
-    runner = IMUSampleObject(len(include_labels),window_length,overlap, sample_period,weights_file,bias_file, user, gestures)
+    left_swipe_classifier = GestClassifier(len(gestures),sample_size*window_length,weights_file,bias_file,include_labels,gestures )
+    runner = IMUSampleObject(left_swipe_classifier,window_length,overlap,sample_freq,user)
     runner.run()
