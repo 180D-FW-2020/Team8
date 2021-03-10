@@ -263,7 +263,6 @@ class IMUSampleObject:
             self.data = np.roll(self.data, (self.window_length - self.overlap)*self.length_sample)
             self.data[self.length_sample*(self.window_length-self.overlap):] = self.reading
             self.samples_taken = 0
-            print(self.data.shape[0])
             result = self.classifier.classify_action(self.data)
 
             # apply result to mqtt link
