@@ -70,8 +70,6 @@ class soft_SVM:
             
         return
     def f(self, test_results):
-        # THIS IS WHERE YOU SHOULD WRITE YOUR CLASSIFICATION FUNCTION
-        #
         # The inputs of this function are:
         #
         # inp: the input to the function f(*), equal to g(y) = W^T y + w
