@@ -88,8 +88,6 @@ class MQTTLink(QObject):
                                   #             "emoji": "some_tag"}}
         self.__debug = debug
 
-        self.send()
-
     def __del__(self):
         self.tx.disconnect()
         self.rx.disconnect()
