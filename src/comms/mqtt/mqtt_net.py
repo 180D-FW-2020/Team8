@@ -211,4 +211,5 @@ class MQTTLink(QObject):
 
     def setUser(self, user):
         self.__user = user
+        self.__data_packet['senderID'] = user
     
