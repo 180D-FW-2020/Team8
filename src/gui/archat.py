@@ -30,8 +30,9 @@ class ARChat():
         self.messages = []
         self.rooms = chatrooms
         self.roomIndex = roomIndex
-        self.wordlimit = 64
-        self.boardpath = ROOT + topic
+        self.wordlimit = 42
+        self.fontSize = 1.5
+        self.boardpath = topic
         self.stagedMessage = ""
 
         self.write_messages()
@@ -112,7 +113,7 @@ class ARChat():
     Returns a path to the saved ARChat .jpg
     '''
     def getPath(self):
-        return str(self.boardpath)
+        return ROOT + self.boardpath
 
     def addRoom(self, topic):
         self.rooms.append(topic)
@@ -121,7 +122,7 @@ class ARChat():
 
     # message overflow processing
     def process_msg(self, message, lim):
-        for i in range(lim, 0, -1):
+        for i in range(lim, 0, -2):
             if(message[i] == ' '):
                 return (message[:i], message[i+1:])
 
@@ -132,9 +133,9 @@ class ARChat():
         index = 0
         for message in self.messages:
             if len(message[3]) != 0:
-                cv.putText(im, message[3] + " " + message[0] + ": " + message[1], (int(im.shape[1]/4), im.shape[0]-200-50*index), cv.FONT_HERSHEY_SIMPLEX, 1, message[2], 2, cv.LINE_AA)
+                cv.putText(im, message[3] + " " + message[0] + ": " + message[1], (int(im.shape[1]/4), im.shape[0]-200-80*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, message[2], 2, cv.LINE_AA)
             else:
-                cv.putText(im, message[0] + message[1], (int(im.shape[1]/4), im.shape[0]-200-50*index), cv.FONT_HERSHEY_SIMPLEX, 1, message[2], 2, cv.LINE_AA)
+                cv.putText(im, message[0] + message[1], (int(im.shape[1]/4), im.shape[0]-200-80*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, message[2], 2, cv.LINE_AA)
             index += 1
         cv.imwrite(str(self.getPath()) + '.jpg', im)
 
@@ -143,17 +144,17 @@ class ARChat():
         im = cv.imread(str(self.getPath()) + '.jpg', 1)
         index = 0
         for room in self.rooms:
-            cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
+            cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,255,255), 2, cv.LINE_AA)
             if(index == self.roomIndex):
-                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 20, cv.LINE_AA)
-                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv.LINE_AA)
+                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,0,255), 20, cv.LINE_AA)
+                cv.putText(im, room, (50, im.shape[0]-1000+100*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, (255,255,255), 2, cv.LINE_AA)
             index += 1
         cv.imwrite(str(self.getPath()) + '.jpg', im)
 
     # post queued message to chatboard
     def write_staged_message(self, index=0):
         im = cv.imread(str(self.getPath()) + '.jpg', 1)
-        cv.putText(im, self.stagedMessage, (int(im.shape[1]/4), im.shape[0]-100+50*index), cv.FONT_HERSHEY_SIMPLEX, 1, [255,255,255], 2, cv.LINE_AA)
+        cv.putText(im, self.stagedMessage, (int(im.shape[1]/4), im.shape[0]-90+50*index), cv.FONT_HERSHEY_SIMPLEX, self.fontSize, [255,255,255], 2, cv.LINE_AA)
         cv.imwrite(str(self.getPath()) + '.jpg', im)
 
 if __name__ == '__main__':
@@ -165,7 +166,7 @@ if __name__ == '__main__':
     chat1.post("Nico", "this is a tester message", [255,124,255], {"hour": 12, "minute": 31, "second": 22})
     chat1.post("Nate", "this is a tester message really long please overflow due to character count", [0,0,255], {"hour": 12, "minute": 32, "second": 11})
     chat1.post("Tommy", "this is a tester message again", [255,0,0], {"hour": 12, "minute": 33, "second": 1})
-    chat1.stage("hmm, why so many test messages? I don't think this overflow works as intended yet so why don't I keep testing this stuff and see when it breaks")
+    chat1.stage("I don't think this overflow works as intended yet so why don't I keep testing this stuff and see when it breaks")
 
     chat2.post("Michael", "testing testing 123", [0,255,0], {"hour": 1, "minute": 5, "second": 2})
     

@@ -41,6 +41,7 @@ import mqtt
 import speech 
 import chat
 import animations 
+import calibrate
 
 from fsm import *
 
@@ -50,7 +51,6 @@ DFORMAT = QImage.Format_RGB888 # color space
 DSCALE = 2 # display scaling factor
 DRATE = 30 # frames per second
 DINTERVAL = round(1000/DRATE) # frame refresh interval (msec)
-TOPICS = ["Nate", "Tommy", "Michael", "Nico"]
 PHRASES = ["place", "message", "return", "cancel", "yes", "no"] 
 
 ATIMEOUT = 5000 # speech recognition max phrase time (msec)
@@ -116,7 +116,7 @@ class DisplayWidget(QWidget):
     def setImage(self, image):
         # self.processMasks()
         self.image = self._array2qimage(image)
-        self.image = self.image.scaled(DRESW, DRESH, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image = self.image.scaled(int(DRESW*0.75), int(DRESH*0.75), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.setFixedSize(self.image.size())
         # print(self.image.size())
         self.update()
@@ -167,24 +167,29 @@ class MainWidget(QWidget):
     returnSignal = pyqtSignal()
     messageSignal = pyqtSignal()
     
-    def __init__(self, parent=None):
+    def __init__(self, screensize, parent=None):
         super().__init__(parent)
+        global DRESW,DRESH
+        DRESW,DRESH = screensize
 
         # MainWidget Object Members
         self.timer = QTimer(self)
         self.setFocusPolicy(Qt.StrongFocus)
+        self.setup = calibrate.Setup()
+        self.setup.init()
 
         self.display = DisplayWidget()
         self.video = ThreadVideo()
-        self.manager = chat.BoardManager(user='Tommy')
+        self.manager = chat.BoardManager(user='default')
         self.overlay = chat.BoardOverlay()
         self.emote = animations.EmoteWidget()
         self.listener = speech.AudioObject({PHRASES[i]:False for i, _ in enumerate(PHRASES)})
-        self.gesturer = net.MQTTIMUObject(user='Tommy')
+        self.gesturer = net.MQTTIMUObject(user='default')
 
         self.layout = QGridLayout()
         self.threadpool = QThreadPool()
 
+        # set up signals to pass to fsm
         self.signals = [
             self.placeSignal, 
             self.messageSignal, 
@@ -195,6 +200,7 @@ class MainWidget(QWidget):
             self.listener.transcribed_phrase
             ]
 
+        # set up slots to pass to fsm
         yesHomo = lambda: self.setHomography(True)
         noHomo = lambda: self.setHomography(False)
 
@@ -205,23 +211,37 @@ class MainWidget(QWidget):
             self.manager.send
             ]
 
+        # instantiate fsm
+        self.fsm = FSM(self.signals, self.slots)
+
         self.phrases = {PHRASES[i] : self.signals[i] for i,_ in enumerate(PHRASES)}
         self.homographyIsActive = True
-
-        self.setMainLayout()
-        
-        self.fsm = FSM(self.signals, self.slots)
-        self.fsm.state_machine.start()
-
-        # create all relevant chats
-        for topic in TOPICS:
-            self.manager.createBoard(topic)
 
         self.__constant_workers__()
         self.__internal_connect__()
 
+    def __run__(self):
+        self.setMainLayout()
+        
+        self.fsm.state_machine.start()
+
+        self.manager.setColor(self.setup.getRGB())
+        self.manager.setUser(self.setup.getUserName())
+        self.__create_chatrooms__(self.setup.getChatrooms())
+
+
+        self.setup.hide()
+
+    def __create_chatrooms__(self, chatrooms):
+        # create all relevant chats
+        for chat in chatrooms:
+            self.manager.createBoard(chat)
+
     def __internal_connect__(self):
         self.gesturer.gestup.connect(lambda up: self.manager.switchTopic(up))
+
+        # connect calibration to rest of system
+        self.setup.nextSignal.connect(self.__run__)
 
         # manager connections
         self.manager.switch.connect(lambda topic: self.overlay.changeTopic(topic))

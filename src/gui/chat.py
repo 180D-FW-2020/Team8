@@ -63,6 +63,8 @@ EMPTYBOARD = {
     "chat"      :   archat.ARChat}
             }
 
+HOMOGRAPHY = np.array([])
+
 ## BoardManager #######################################################################################################
 ## a class for managing all of the ARChat boards
 
@@ -92,7 +94,7 @@ class BoardManager(QObject):
         self.color = color
         self.text = ""
         self.topic = "general"
-        self.boards = {}
+        self.boards = {} 
 
         self.createBoard(self.topic)
         self.stage(' ')
@@ -174,6 +176,12 @@ class BoardManager(QObject):
             list_en.append(board["link"].listen)
         return list_en
 
+    def setUser(self, username):
+        self.user = username
+    
+    def setColor(self, colour):
+        self.color = colour
+
 class BoardOverlay(QObject):
     board = pyqtSignal(np.ndarray)
     def __init__(self, topic='general', parent=None):
@@ -207,10 +215,15 @@ class BoardOverlay(QObject):
         dstpts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
         matrix, mask = cv.findHomography(srcpts, dstpts, cv.RANSAC, 5)
 
+        global HOMOGRAPHY
+        if HOMOGRAPHY.shape[0] != 3: # initialize accumulated homography matrix
+            HOMOGRAPHY = matrix
+        HOMOGRAPHY = cv.accumulateWeighted(matrix, HOMOGRAPHY, 0.25) # moving avg of past 4 frames
+
         points = np.float32([[0,0], [0,height], [width,height], [width,0]]).reshape(-1,1,2)
-        dst = cv.perspectiveTransform(points, matrix)
+        dst = cv.perspectiveTransform(points, HOMOGRAPHY)
         
-        warpedimage = cv.warpPerspective(overlayimage, matrix, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
+        warpedimage = cv.warpPerspective(overlayimage, HOMOGRAPHY, (cameraimage.shape[1], cameraimage.shape[0]))  # changes video frame shape into model surface
 
         newmask = np.zeros((cameraimage.shape[0], cameraimage.shape[1]), np.uint8)                        
         cv.fillPoly(newmask, [np.int32(dst)], (255, 255, 255))

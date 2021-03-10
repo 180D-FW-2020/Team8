@@ -12,8 +12,11 @@ import app
 class UI:
     def __init__(self):
         self.qapp = QApplication(sys.argv)
+        screen = self.qapp.primaryScreen()
+        size = screen.size()
+        sizes = (size.width(),size.height())
         self.window = QMainWindow()
-        self.main_widget = app.MainWidget()
+        self.main_widget = app.MainWidget(sizes)
         self.window.setCentralWidget(self.main_widget)
         self.window.show()
         sys.exit(self.qapp.exec_())
