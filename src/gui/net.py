@@ -48,7 +48,7 @@ class MQTTIMUObject(QObject):
 
     def gesture(self, datapacket):
         print('message received')
-        if datapacket['message_type'] == 'gesture':
+        if datapacket['message_type'] == 'gesture1':
             word = datapacket['data']
             self.gestup.emit(word == 'up')
         
