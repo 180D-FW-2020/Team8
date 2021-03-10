@@ -9,6 +9,9 @@ class SpeechRecognizer:
         self.recog = sr.Recognizer()
         self._phrases = keyphrases
         self.current_phrase = None # entire sentence
+        self.audio_source = sr.Microphone()
+        with self.audio_source as source:
+            self.recog.adjust_for_ambient_noise(source)
 
     def _create_audio_source(self):
         self.audio_source = sr.Microphone()
@@ -31,14 +34,12 @@ class SpeechRecognizer:
             print("STT error; {0}".format(err))
 
     def listenForPhrases(self):
-        while True:
-            self._create_audio_source()
-            try:
-                with self.audio_source as source:
-                    new_words = self.recog.listen(source)
-            except:
-                print('yeah something happened buddy')
-            self._recognize(new_words)
+        with self.audio_source as source:
+            while True:
+                try:
+                    self._recognize(self.recog.listen(source))
+                except:
+                    print('yeah something happened buddy')
         print("audio teardown")
 
     def addKeyphrase(self, keyphrase):
