@@ -59,8 +59,8 @@ class IMUSampleObject:
         self.window_length = window_length #number of Samples
         self.length_sample = 14
         self.classifier    = classifier
-        self.data    = [0.0]*self.length_sample*window_length
-        self.reading = [0.0]*self.length_sample*(window_length-overlap)
+        self.data    = np.array([0.0]*self.length_sample*window_length)
+        self.reading = np.array([0.0]*self.length_sample*(window_length-overlap))
         self.overlap = overlap
         self.samples_taken = 0
         self.sample_freq = sample_freq
