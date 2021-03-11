@@ -37,7 +37,7 @@ class SpeechRecognizer:
         with self.audio_source as source:
             while True:
                 try:
-                    self._recognize(self.recog.listen(source))
+                    self._recognize(self.recog.listen(source, phrase_time_limit=5))
                 except:
                     print('yeah something happened buddy')
         print("audio teardown")
