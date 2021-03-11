@@ -27,23 +27,7 @@ DRESW = 640 # resolution width
 DRESH = 480 # res height
 DFORMAT = QImage.Format_RGB888 # color space
 
-def sendMessage(chat):
-    link = mqtt.MQTTLink(topic='ece180d/MEAT/' + chat, user_id = 'Jake')
 
-    message = {
-        'message_type'  :   'text',
-        'sender'    :   'Jake', 
-        'data'      :   str(np.random.randint(3)),
-        'time'      :    {
-            'hour': 11,
-            'minute': 52,
-            'second': 0
-            },
-        'color' :   (255, 255, 255),
-        'emoji' :   []
-        }
-
-    link.send(message)
 
 # @desc
 # widget for handling a display from an opencv source
@@ -90,6 +74,7 @@ class MainWidget(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.manager = chat.BoardManager('Nico')
         self.display = DisplayWidget()
+        self.link = mqtt.MQTTLink(topic='ece180d/MEAT', user_id = 'Jake')
 
         # threading
         self.threadpool = QThreadPool()
@@ -97,9 +82,7 @@ class MainWidget(QWidget):
         for topic in TOPICS:
             self.manager.createBoard(topic)
 
-        funcs = self.manager.listen()
-        for func in funcs:
-            self.__create_worker__(func)
+        self.__create_worker__(self.manager.link.listen)
 
         self.manager.switch.connect(lambda topic: self.switchDisplayTopic(topic))
 
@@ -108,16 +91,33 @@ class MainWidget(QWidget):
         self.layout = QGridLayout()
         self.setMainLayout()
 
+    def sendMessage(self, chat):
+        message = {
+            'board'     : 'general',
+            'message_type'  :   'text',
+            'sender'    :   'Jake', 
+            'data'      :   str(np.random.randint(20)),
+            'time'      :    {
+                'hour': 11,
+                'minute': 52,
+                'second': 0
+                },
+            'color' :   (255, 255, 255),
+            'emoji' :   []
+            }
+
+        self.link.send(message)
+
     def keyPressEvent(self, event):
         super(MainWidget, self).keyPressEvent(event)
         if event.key() == Qt.Key_Q:
-            sendMessage('general')
+            self.sendMessage('general')
         if event.key() == Qt.Key_A:
-            sendMessage('Nate')
+            self.sendMessage('Nate')
         if event.key() == Qt.Key_S:
-            sendMessage('Tommy')
+            self.sendMessage('Tommy')
         if event.key() == Qt.Key_D:
-            sendMessage('Michael')
+            self.sendMessage('Michael')
         if event.key() == Qt.Key_W:
             self.manager.switchTopic()
             

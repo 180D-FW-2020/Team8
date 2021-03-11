@@ -17,13 +17,14 @@ import cv2 as cv
 import mqtt_net as mqtt
 import archat
 import numpy as np
+import time as t
 from datetime import datetime as time
 import stringparser
 
 ## Globals #######################################################################################################
 ## a list of globals used in this file
 
-DELIM = "slash"
+DELIM = "/"
 TOPICPREF = "ece180d/MEAT/"
 ROOT = "data/gui/"
 EMOTEIDS = {
@@ -43,24 +44,6 @@ EMOTEIDS = {
     "hmmm"         : 14,
     "tongue"       : 15,
     "wink"         : 16        
-            }
-MSG = {
-            "message_type" : str,
-            "sender" : str,
-            "data" : str,
-            "time" : {
-                "hour": int,
-                "minute": int,
-                "second": int
-            },
-            "ID" : int, 
-            "color": tuple, 
-            "emoji": list
-        }
-EMPTYBOARD = {  
-    "topic"     :
-    {"link"      :   mqtt.MQTTLink, 
-    "chat"      :   archat.ARChat}
             }
 
 HOMOGRAPHY = np.array([])
@@ -93,72 +76,78 @@ class BoardManager(QObject):
         self.user = user
         self.color = color
         self.text = ""
-        self.topic = "general"
-        self.boards = {} 
+        self.board = "general"
+        self.chats = {}
 
-        self.createBoard(self.topic)
-        self.stage(' ')
+        # set up the link
+        self.__link__()
+
+        # create the general board
+        self.createBoard(self.board)
+        self.stage('')
+
+        self.link.message.connect(lambda message: self.__receive__(message))
+        self.link.disconnect.connect(self.__link__)
 
     def __time__(self):
         now = time.now()
         return { "hour": now.hour, "minute": now.minute, "second": now.second }
 
-    def __receive__(self, topic, message):
+    def __receive__(self, datapacket):
+        board = datapacket['board']
         try:
-            chat = self.boards[topic]['chat']
+            chat = self.chats[board]
         except KeyError:
             print("Whoa! Looks like there isn't a board with that topic.")
         
-        user, color, time, text, emojis = message['sender'], message['color'], message['time'], message['data'], message['emoji']
+        user, color, time, text, emojis = datapacket['sender'], datapacket['color'], datapacket['time'], datapacket['data'], datapacket['emoji']
 
         chat.post(user, text, color, time)
         self.emoji.emit(emojis)
+
+    def __link__(self):
+        self.link = mqtt.MQTTLink(topic='ece180d/MEAT', user_id=self.user, color=self.color)
 
     def __parse__(self, message):
         text, emojis = stringparser.parse_string(message, DELIM, EMOTEIDS)
         return text, emojis
 
-    def createBoard(self, topic:str):
-        if topic not in list(self.boards.keys()):
-            self.boards[topic] = {
-                "link"       :   mqtt.MQTTLink(TOPICPREF + topic, self.user),
-                "chat"      :   archat.ARChat(topic, len(self.boards), list(self.boards.keys()))
-                }
-            self.boards[topic]["link"].message.connect(lambda x: self.__receive__(topic, x))
+    def createBoard(self, board:str):
+        if board not in list(self.chats.keys()):
+            self.chats[board] = archat.ARChat(board, len(self.chats), list(self.chats.keys()))
 
-            for board in self.boards.values():
-                board['chat'].addRoom(topic)
+            for chat in self.chats.values():
+                chat.addRoom(board)
 
     def switchTopic(self, forward = True):
         #TODO: fix
-        keys = list(self.boards.keys())
-        idx = keys.index(self.topic)
+        keys = list(self.chats.keys())
+        idx = keys.index(self.board)
         if forward:
             try:
-                self.topic = keys[idx+1]
+                self.board = keys[idx+1]
             except IndexError:
-                self.topic = keys[0]
+                self.board = keys[0]
         else:
             try:
-                self.topic = keys[idx-1]
+                self.board = keys[idx-1]
             except IndexError:
-                self.topic = keys[len(keys)-1]
+                self.board = keys[len(keys)-1]
 
-        self.switch.emit(self.topic)
+        self.switch.emit(self.board)
 
     def stage(self, message : str):
-        chat = self.boards[self.topic]['chat']
+        chat = self.chats[self.board]
         chat.stage(message)
         self.text = self.__parse__(message)
-        print(self.text[1])
         self.emoji.emit(self.text[1])
 
-    def send(self):
-        link = self.boards[self.topic]['link']
-        chat = self.boards[self.topic]['chat']
+    def send(self, blank=False):
+        chat = self.chats[self.board]
         time = self.__time__()
         message, emojis = self.text
         datapacket = {
+            "board"     :   self.board,
             "message_type" : "text",
             "sender" : self.user,
             "data" : message,
@@ -166,18 +155,18 @@ class BoardManager(QObject):
             "color": self.color, 
             "emoji": emojis
         }
-        link.send(datapacket)
+        self.link.send(datapacket)
         chat.stage('')
         chat.post(self.user, message, self.color, time)
-         
-    def listen(self):
-        list_en = []
-        for board in self.boards.values():
-            list_en.append(board["link"].listen)
-        return list_en
 
+    def sendConstant(self):
+        while True:
+            t.sleep(1)
+            link.send()
+            
     def setUser(self, username):
         self.user = username
+        self.link.setUser(username)
     
     def setColor(self, colour):
         self.color = colour
@@ -253,5 +242,3 @@ class BoardOverlay(QObject):
         if len(matches) > 250:
             return self.__embed__(image, overlay, kp1, kp2, matches, augmentedimage, height, width)
         return image
-
-    

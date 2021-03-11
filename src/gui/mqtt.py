@@ -30,7 +30,7 @@ DELIM = "slash"
 sys.path.append("src/comms/mqtt")
 sys.path.append("src/gui")
 
-import mqtt_link as mqtt
+import mqtt_net as mqtt
 import stringparser
 
 class MQTTNetObject(mqtt.MQTTLink):
@@ -73,8 +73,5 @@ class MQTTIMUObject(mqtt.MQTTLink):
                 if msg["data"] is "up":
                     self.gestup.emit(True)
                 elif msg["data"] is "down":
-                    self.gestup.emit(False)
-        
-
-                     
+                    self.gestup.emit(False)            
             

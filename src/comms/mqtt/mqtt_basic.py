@@ -45,7 +45,7 @@ class MQTTLink(QObject):
         message = json.loads(str(message.payload)[2:-1])
         self.__receive__(message)
 
-    def __init__(self, topic : str, parent=None):
+    def __init__(self, topic : str, user_id : str, color : list = [255,255,255], parent=None):
         '''
         Initialize a new MQTTLink object 
         
@@ -56,6 +56,7 @@ class MQTTLink(QObject):
         self.tx = Client()
         self.rx = Client()
         self.topic = topic
+        self.user = user_id
         self.isListening = False
 
         #configure client
@@ -84,7 +85,8 @@ class MQTTLink(QObject):
         Inputs:
             - message: a received json string
         '''
-        self.message.emit(message)
+        if message['sender'] != self.user:
+            self.message.emit(message)
 
     ## Public #######################################################################################################
         
@@ -124,3 +126,6 @@ class MQTTLink(QObject):
             raise TypeError('Unknown message type not supported; try formatting to dictionary')
 
         self.tx.loop_stop()
+
+    def setUser(self, user):
+        self.user = user

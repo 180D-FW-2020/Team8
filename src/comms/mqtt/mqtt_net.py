@@ -17,6 +17,7 @@ class MQTTLink(QObject):
         - message: a received message that is triggered upon message receive 
     '''
     message = pyqtSignal(dict)
+    disconnect = pyqtSignal()
 
     ## Privates #######################################################################################################
 
@@ -28,7 +29,8 @@ class MQTTLink(QObject):
     
     def __on_disconnect_subscriber__(self, client, userdata, rc):
         if rc != 0:
-            print('Unexpected Disconnect')
+            print('Unexpected Disconnect' + str(rc))
+            self.disconnect.emit()
         else:
             print('Expected Disconnect')
     
@@ -37,7 +39,8 @@ class MQTTLink(QObject):
     
     def __on_disconnect_publisher__(self, client, userdata, rc):
         if rc != 0:
-            print('Unexpected Disconnect')
+            print('Unexpected Disconnect' + str(rc))
+            self.disconnect.emit()
         else:
             print('Expected Disconnect')
 
@@ -86,7 +89,6 @@ class MQTTLink(QObject):
         self.__network_users = {} # {"USERID": {"color":[0,0,0],
                                   #             "emoji": "some_tag"}}
         self.__debug = debug
-
 
     def __del__(self):
         self.tx.disconnect()
@@ -138,8 +140,7 @@ class MQTTLink(QObject):
             if packet["senderID"] not in self.__last_received_msg_IDS:
                 self.__last_received_msg_IDS[packet["senderID"]]= []
                 self.__network_users[packet["senderID"]] = {
-                                                            "color":packet["senderColor"],
-                                                            "emoji": packet["senderEmojiImage"]
+                                                            "color":packet["senderColor"]
                                                         }
             for msg in packet["messages"]:
                 if msg["ID"] not in self.__last_received_msg_IDS[packet["senderID"]]:
@@ -176,13 +177,12 @@ class MQTTLink(QObject):
         '''
         if duration == -1:
             self.listen_called = True
-            self.rx.loop_start() # changed from loop forever so nonblocking thread
+            self.rx.loop_forever() # changed from loop forever so nonblocking thread
         else:
             self.rx.loop_start()
             time.sleep(duration)
             self.rx.loop_stop()
         
-
     def send(self, message : dict = {}):
         '''
         Sends a message or list of messages over the board to which it is subscribed
@@ -203,7 +203,11 @@ class MQTTLink(QObject):
                 self.__addMessage__(message)
             else:
                 raise TypeError('Unknown message type not supported; try formatting to dictionary')
+        print(json.dumps(self.__data_packet))
         self.tx.publish(self.topic, json.dumps(self.__data_packet), qos=1)
         self.tx.loop_stop()
 
+    def setUser(self, user):
+        self.__user = user
+        self.__data_packet['senderID'] = user
     

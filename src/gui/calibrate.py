@@ -86,7 +86,8 @@ class Setup(QWidget):
         return self.username
 
     def getRGB(self):
-        return self.color
+        colorRGB = (self.color[2], self.color[1], self.color[0])
+        return colorRGB
 
     def getChatrooms(self):
         return self.chatrooms

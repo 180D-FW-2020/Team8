@@ -223,14 +223,12 @@ class MainWidget(QWidget):
     def __run__(self):
         self.setMainLayout()
         
-        self.fsm.state_machine.start()
-
         self.manager.setColor(self.setup.getRGB())
         self.manager.setUser(self.setup.getUserName())
         self.__create_chatrooms__(self.setup.getChatrooms())
 
-
         self.setup.hide()
+        self.fsm.state_machine.start()
 
     def __create_chatrooms__(self, chatrooms):
         # create all relevant chats
@@ -262,15 +260,12 @@ class MainWidget(QWidget):
 
     def __constant_workers__(self):
         self.timer.start(DINTERVAL)
-        self.__create_worker__(self.video.captureFrames)
-        self.__create_worker__(self.listener.speechHandler)
-        self.__create_worker__(self.__print_phrases__)
-        
-        self.__create_worker__(self.gesturer.link.listen)
-
-        listen_funcs = self.manager.listen()
-        for func in listen_funcs:
-            self.__create_worker__(func)
+        self.__create_worker__(self.manager.sendConstant)       # constantly sends out info
+        self.__create_worker__(self.video.captureFrames)        # constantly captures frames
+        self.__create_worker__(self.listener.speechHandler)     # constantly listens
+        self.__create_worker__(self.manager.link.listen)        # constantly mqtt listening
+        self.__create_worker__(self.__print_phrases__)          # constantly printing PHRASES
+        self.__create_worker__(self.gesturer.link.listen)       # constantly mqtt listening (gesturer)
 
     def __phrase_rec__(self, phrase):
         if phrase in PHRASES:
