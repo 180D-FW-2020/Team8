@@ -11,7 +11,7 @@ class SpeechRecognizer:
         self.current_phrase = None # entire sentence
         self.audio_source = sr.Microphone()
         with self.audio_source as source:
-            self.recog.adjust_for_ambient_noise(source, duration=5)
+            self.recog.adjust_for_ambient_noise(source)
 
     def _create_audio_source(self):
         self.audio_source = sr.Microphone()
