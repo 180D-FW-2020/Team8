@@ -381,7 +381,7 @@ if __name__ == "__main__":
     sample_size = 14
     weights_file = "../../../data/gesture/classifier_coeffs/ls_classifier_coeffs.csv"
     bias_file =    "../../../data/gesture/classifier_coeffs/ls_classifier_bias.csv"
-    user = "tommy_rpi"
+    user = input ("Enter Username :") 
     gestures = ["left_swipe", "garbage"]
     left_swipe_classifier = GestClassifier(len(gestures),sample_size*window_length,weights_file,bias_file,include_labels,gestures )
     runner = IMUSampleObject(left_swipe_classifier,window_length,overlap,sample_freq,user)
