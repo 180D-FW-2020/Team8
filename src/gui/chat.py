@@ -45,24 +45,6 @@ EMOTEIDS = {
     "tongue"       : 15,
     "wink"         : 16        
             }
-MSG = {
-            "message_type" : str,
-            "sender" : str,
-            "data" : str,
-            "time" : {
-                "hour": int,
-                "minute": int,
-                "second": int
-            },
-            "ID" : int, 
-            "color": tuple, 
-            "emoji": list
-        }
-EMPTYBOARD = {  
-    "topic"     :
-    {"link"      :   mqtt.MQTTLink, 
-    "chat"      :   archat.ARChat}
-            }
 
 HOMOGRAPHY = np.array([])
 
